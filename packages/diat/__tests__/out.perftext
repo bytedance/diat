@@ -1,0 +1,43 @@
+node 20616  2285.637821:          1 cycles:u:
+            7f34447c2ce7 epoll_pwait+0x87 (/lib/x86_64-linux-gnu/libc-2.24.so)
+
+node 20616  2285.637872:          1 cycles:u:
+            7f34447c2ce7 epoll_pwait+0x87 (/lib/x86_64-linux-gnu/libc-2.24.so)
+
+node 20616  2285.637916:         25 cycles:u:
+            7f34447c2ce7 epoll_pwait+0x87 (/lib/x86_64-linux-gnu/libc-2.24.so)
+
+node 20616  2285.637958:        752 cycles:u:
+            7f34447c2ce7 epoll_pwait+0x87 (/lib/x86_64-linux-gnu/libc-2.24.so)
+
+node 20616  2285.638000:      23144 cycles:u:
+            7f34447c2ce7 epoll_pwait+0x87 (/lib/x86_64-linux-gnu/libc-2.24.so)
+
+node 20616  2285.638051:     709910 cycles:u:
+                  b01223 _ZN2v811HandleScope10InitializeEPNS_7IsolateE+0x63 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  9d4a49 _ZN4node12_GLOBAL__N_19TimerWrap9OnTimeoutEP10uv_timer_s+0x29 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  a6ba25 uv__run_timers+0x35 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  a6fd4c uv_run+0x8c (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  904595 _ZN4node5StartEPN2v87IsolateEPNS_11IsolateDataERKSt6vectorISsSaISsEES9_+0x565 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  90281f _ZN4node5StartEiPPc+0x48f (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+            7f34446fa2e1 __libc_start_main+0xf1 (/lib/x86_64-linux-gnu/libc-2.24.so)
+        d81d972d8d48e024 [unknown] ([unknown])
+
+node 20616  2289.642973:   18265529 cycles:u:
+            195f8e5a3c86 BytecodeHandler:LogicalNot+0x6 (/tmp/perf-20616.map)
+            195f8e5118d5 Builtin:InterpreterEntryTrampoline+0x275 (/tmp/perf-20616.map)
+            195f8e50ee75 Builtin:JSEntryTrampoline+0x75 (/tmp/perf-20616.map)
+            195f8e5092c1 Stub:JSEntryStub+0xa1 (/tmp/perf-20616.map)
+                  e9f333 _ZN2v88internal9Execution4CallEPNS0_7IsolateENS0_6HandleINS0_6ObjectEEES6_iPS6_+0x103 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  b26169 _ZN2v88Function4CallENS_5LocalINS_7ContextEEENS1_INS_5ValueEEEiPS5_+0x179 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  8fb718 _ZN4node20InternalMakeCallbackEPNS_11EnvironmentEN2v85LocalINS2_6ObjectEEENS3_INS2_8FunctionEEEiPNS3_INS2_5ValueEEENS_13async_contextE+0x1a8 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  8c35c9 _ZN4node9AsyncWrap12MakeCallbackEN2v85LocalINS1_8FunctionEEEiPNS2_INS1_5ValueEEE+0x89 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  9d4a84 _ZN4node12_GLOBAL__N_19TimerWrap9OnTimeoutEP10uv_timer_s+0x64 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  a6ba25 uv__run_timers+0x35 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  a6fd4c uv_run+0x8c (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  904595 _ZN4node5StartEPN2v87IsolateEPNS_11IsolateDataERKSt6vectorISsSaISsEES9_+0x565 (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+                  90281f _ZN4node5StartEiPPc+0x48f (/data00/home/ouyangyadong/.nvm/versions/node/v10.17.0/bin/node)
+            7f34446fa2e1 __libc_start_main+0xf1 (/lib/x86_64-linux-gnu/libc-2.24.so)
+        d81d972d8d48e024 [unknown] ([unknown])
+
+

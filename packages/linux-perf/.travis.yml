@@ -1,0 +1,34 @@
+language: node_js
+matrix:
+  include:
+    # Test on Ubuntu Xenial
+    - dist: xenial
+      node_js: "10"
+    # Test on Ubuntu Xenial
+    - dist: xenial
+      node_js: "12"
+    # Test Node.js master nightly build
+    - node_js: "node"
+      sudo: required
+      dist: xenial
+      install:
+        - npm install --nodedir=$(dirname $(dirname $(which node)))/
+      env:
+        - NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly
+        - NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly
+    # Test Node.js v8-canary nightly build
+    - node_js: "node"
+      sudo: required
+      dist: xenial
+      before_install:
+        - sudo apt-get -qq update
+        - sudo apt-get install lldb-3.9 liblldb-3.9-dev -y
+      install:
+        - npm install --nodedir=$(dirname $(dirname $(which node)))/
+      env:
+        - NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/v8-canary
+        - NODEJS_ORG_MIRROR=https://nodejs.org/download/v8-canary
+branches:
+  only:
+    - master
+script: npm test

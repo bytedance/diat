@@ -1,0 +1,33 @@
+{
+  "name": "diat-linux-perf",
+  "version": "1.1.6",
+  "description": "",
+  "main": "linux-perf.js",
+  "scripts": {
+    "test": "./test.sh",
+    "install": "node install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmarchini/node-linux-perf.git"
+  },
+  "keywords": [
+    "linux",
+    "perf"
+  ],
+  "author": "Matheus Marchini <matheusdot@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mmarchini/node-linux-perf/issues"
+  },
+  "homepage": "https://github.com/mmarchini/node-linux-perf#readme",
+  "dependencies": {
+    "node-addon-api": "^1.7.1",
+    "node-gyp": "^4.0.0",
+    "semver": "^6.3.0"
+  },
+  "devDependencies": {
+    "clang-format": "^1.2.3",
+    "tap": "^12.6.5"
+  }
+}

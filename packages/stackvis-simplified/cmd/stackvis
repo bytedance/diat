@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+
+/*
+ * cmd/stackvis: convert stacks between different representations
+ */
+var mod_bunyan = require('bunyan');
+
+var mod_stackvis = require('../lib/stackvis');
+
+var log = new mod_bunyan({
+    'name': 'stackvis',
+    'stream': process.stderr
+});
+
+function usage()
+{
+	console.error('usage: stackvis input-format output-format');
+	console.error('or     stackvis share [FILENAME]');
+	process.exit(2);
+}
+
+function main()
+{
+	if (process.argv.length > 4)
+		usage();
+
+	if (process.argv.length === 2 ||
+	    process.argv[2] != 'share')
+		cmdTranslate();
+}
+
+function cmdTranslate()
+{
+	var reader, writer;
+	var rname = 'dtrace';
+	var wname = 'flamegraph-d3';
+
+	if (process.argv.length > 2) {
+		if (process.argv[2][0] == '-')
+			usage();
+		rname = process.argv[2];
+	}
+
+	if (process.argv.length > 3)
+		wname = process.argv[3];
+
+	try {
+		reader = new mod_stackvis.readerLookup(rname);
+		writer = new mod_stackvis.writerLookup(wname);
+	} catch (ex) {
+		console.error(ex.message);
+		usage();
+	}
+
+	mod_stackvis.pipeStacks(log, process.stdin, reader, writer,
+	    process.stdout, function () {});
+	process.stdin.resume();
+}
+
+main();
