@@ -22,7 +22,7 @@ diat 是基于[inspector](https://nodejs.org/api/inspector.html)模块（提供:
   - [metric](#metric)
   - [cpuprofile](#cpuprofile)
   - [heapsnapshot](#heapsnapshot)
-  - [perfbasicprof & perf2svg](#perfbasicprof & perf2svg)
+  - [perfbasicprof & perf2svg](#perfbasicprof--perf2svg)
 - [已知限制](#已知限制)
 - [工作原理](#工作原理)
 - [Contributing](#Contributing)
