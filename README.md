@@ -6,46 +6,80 @@
 
 [[English Doc]](./README_EN.md)
 
-diat 是基于[inspector](https://nodejs.org/api/inspector.html)模块（提供: cpuprofile, heapsnapshot, debug 等能力）用于协助 Node.js 进程进行问题诊断的 CLI 工具。其特点在于：
-
-- 开箱即用，无需应用事先接入。因为不需要重启进程，所以对偶发的问题会有所帮助。但在部分环境下会有[相应的限制](#已知限制)。
-- 支持对 worker_threads 开启的线程进行 inspect。
-- 因为基于 inspector 协议，并且 Node.js 的 inspector server 是运行在独立的线程上，所以大部分功能在进程的主线程阻塞时也可以工作。
-- 需要消耗额外资源的命令在工具退出后会关闭，尽可能少给进程带来额外的资源消耗。
+diat 是基于[inspector](https://nodejs.org/api/inspector.html)模块（提供: cpuprofile, heapsnapshot, debug 等能力）用于协助 Node.js 进程进行问题诊断的 CLI 工具。可以将diat当成是具有更多特性的`node-inspect`。
 
 ## 索引
 
 - [动机](#动机)
+  - [node-inspect相比于其他工具有什么优点](#node-inspect相比于其他工具有什么优点)
+  - [diat相比于node-inspect做了什么改动](#diat相比于node-inspect做了什么改动)
+  - [推荐的排查途径](#推荐的排查途径)
 - [安装](#安装)
+  - [Node.js版本支持](#Node.js版本支持)
 - [使用场景介绍](#使用场景介绍)
   - [inspect](#inspect)
+    - [关闭inspector](#关闭inspector)
   - [inspectworker](#inspectworker)
+  - [repl](#repl)
   - [metric](#metric)
   - [cpuprofile](#cpuprofile)
   - [heapsnapshot](#heapsnapshot)
+    - [其他V8内存相关的profile](#其他V8内存相关的profile)
   - [perfbasicprof & perf2svg](#perfbasicprof--perf2svg)
 - [已知限制](#已知限制)
 - [工作原理](#工作原理)
+- [在Electron上使用](#在Electron上使用)
 - [Contributing](#Contributing)
 - [License](#License)
 
 ## 动机
 
-在解决 Node.js 服务端应用中发生的问题的过程中，我们发现**Node.js/V8 原生的 inspector 模块是解决各类问题最有效的工具**（不考虑大量使用 addon，因而需要排查 c/cpp 代码的情况），比如：用 cpuprofile 解决 cpu 使用率异常的问题；用 heapsnapshot 排查内存泄漏的问题等等。并且不少 Node.js 开发者具有 web 开发的经验，也就是说开发者学习利用 Chrome Devtools 进行问题排查可能是成本的最低途径之一。
+在解决 Node.js 服务端应用中发生的问题的过程中，我们发现**Node.js/V8 原生的 inspector 模块是解决各类问题最有效的工具**（不考虑大量使用 addon，因而需要排查 c/cpp 代码的情况），比如：用 cpuprofile 解决 cpu 使用率异常的问题；用 heapsnapshot 排查内存泄漏的问题等等；用Debugger 协议直接打 logpoint 甚至热更新代码来协助排查业务问题。
 
-虽然 inspector 如此强大，但在实际的实践过程中仍然有一些问题困扰着我们，比如：
+并且不少 Node.js 开发者都具有 web 开发的经验，也就是说开发者学习利用 Chrome Devtools 进行问题排查可能是成本的最低途径之一。
 
+但在实践过程中仍然有一些问题困扰着我们，比如：
 - 有些线上问题偶发且难以追踪、复现，开启 inspector 重启应用后问题消失
 - 有些环境我们可以开启 inspector，但外网无法访问
-- 非业务性质的线上问题诊断本身是一个重要但低频的场景，相比之下要求各个业务线事先统一接入一套诊断工具的成本较高（但问题还是会找到你）
+- 非业务性质的线上问题诊断本身是一个重要但低频的场景，相比之下要求各个业务线事先统一接入一套诊断工具的成本较高
 
 因此我们期望 diat 针对线上问题诊断的场景，能作为一个开箱即用的工具，围绕 Node.js/V8 inspector 的能力缩短 V8 inspector 的使用成本。
+
+### node-inspect相比于其他工具有什么优点
+
+相比于其他诊断工具，`node-inspect` 支持 `node-inspect -p $PID` 来对一个进程直接进行调试，这种模式的优点在于：
+
+- 开箱即用，无需应用事先接入。因为在使用时通常不需要重启进程，所以对于偶发或难以复现的问题排查会有所帮助。
+- 部分功能在进程的主线程阻塞时也可以工作，如V8 cpu profile。因为直接基于 inspector 协议，并且 Node.js 的 inspector server 是运行在独立的线程上。
+- 需要消耗额外资源的命令在工具退出后会关闭，从而尽可能少给进程带来额外的资源消耗。因此也更适合用在生产环境上。
+
+而对于windows或是其他不能用 `node-inspect -p $PID` 的场合，则需要配合 `--inspect` 使用。
+
+### diat相比于node-inspect做了什么改动
+
+diat 的代码本身就包含了一份改动过的 `node-inspect` 代码，通过 `diat inspect -r` 即可使用 `node-inspect`。相比于`node-inspect`，diat添加了更多功能和优化，包括：
+
+- 支持开启 worker_threads 的 inspector server 并进行调试。
+- 支持代理 inspector server 的服务到外部网络中，从而允许其他调试工具接入。
+- 退出后关闭 inspector server 释放9229端口，避免在有多个 Node.js 进程（或者说 V8 实例）的场景下 9229 端口被一个进程占用。
+- 支持更多特性：除了生成 cpuprofile 和 heapsnapshot，还支持生成 heapprofile 和 heaptimeline 文件。
+
+### 推荐的排查途径
+
+1. 如果环境允许外部网络访问，推荐直接开启 inspector server 并用 debugger 工具接入
+2. 否则再利用利用CLI提供的各类命令解决问题
 
 ## 安装
 
 ```
 npm i diat -g && diat --help
 ```
+
+### Node.js版本支持
+
+||Node.js 8|Node.js 10|Node.js 12|
+|---|---|---|---|
+|版本支持|⚠️ 使用上会有些限制|✅|✅|
 
 ## 使用场景介绍
 
@@ -77,6 +111,14 @@ press ctrl/meta+c to exit
 
 排查结束用`ctrl/meta+c`退出 diat 进程后，diat 会关闭业务进程中的 inspector。如果 diat 进程异常退出没能关闭进程的 inspector 的话，因为 inspector 默认监听的是`127.0.0.1`端口，一般风险也不大。
 
+#### 关闭inspector
+
+你可以通过下列命令手动关闭一个端口上的inspector server，从而释放对应的端口：
+
+```
+diat inspectstop -a 127.0.0.1:9229
+```
+
 ### inspectworker
 
 目前社区缺少对 worker_threads 开启的线程进行调试的支持（[ndb](https://github.com/GoogleChromeLabs/ndb)支持）。`inspectworker`命令可以用来打开线程的 inspector 进行调试：
@@ -98,6 +140,18 @@ __tests__/test_process/thread_worker.js]
 选择相应的线程后，diat 会打开对应线程的 inspector，后续使用方式同`inspect`命令，可以参照[inspect](#inspect)中的描述。
 
 因为目前 Node.js 对 worker_threads 中的 inspector 的支持有所缺失（或者说未来 worker_threads 的调试方式不一定是以 inspector 为主），所以目前 diat 打开线程中的 inspector 后无法关闭。
+
+### repl
+
+前面介绍了用 `inspect` 和 `inspectworker` 打开 inspector 的方式，但在一些环境中我们并不能用外部 debugger 接入，比如：网络隔离的情况。这种情况下我们可以利用 `-r` 配置在命令行上进行调试，如：
+
+```
+diat inspect -p <PID> -r
+```
+
+成功后输入 `help` 查看 `node-inspect` 支持的命令。关于 `node-inspect` 的详细信息可以查看文档：
+- debugger https://nodejs.org/api/debugger.html
+- node-inspect https://github.com/nodejs/node-inspect
 
 ### metric
 
@@ -132,6 +186,8 @@ profiling...
 cpuprofile generated at: /diat_90504_1584018222518.cpuprofile
 ```
 
+<img src="./imgs/cpuprofile.png" style="width: 55%;"/>
+
 你可以在 Chrome Devtools 中的 Profiler 面板中打开.cpuprofile 文件进行分析。关于 cpu profile 的使用说明可以参考 Chrome Devtools 的[官方文档](https://developers.google.com/web/updates/2016/12/devtools-javascript-cpu-profile-migration)。
 
 cpuprofile 支持配置如下参数：
@@ -151,9 +207,29 @@ diat heapsnapshot -p <PID>
 
 你可以在 Chrome Devtools 中的 Memory 面板中打开.heapsnapshot 文件进行分析。关于 heap snapshot 的使用说明可以参考 Chrome Devtools 的[官方文档](https://developers.google.com/web/tools/chrome-devtools/memory-problems/heap-snapshots#view_snapshots)。
 
+<img src="./imgs/heapsnapshot.png" style="width: 55%;"/>
+
 **注意：** 生成 heap snapshot 可能导致内存占用比较高的进程退出。因为没有指定参数的话，Node.js 进程在 64bit 机器上的 max-old-space-size 是 1.4GB 左右（Node.js 12 上的某个版本开始不再做这个默认的限制），而 heap snapshot 在生成的过程中会额外占用不少内存。此时继续增大内存占用会导致 V8 abort 或系统 OOM killer 关闭业务进程。对于这个问题暂时可能没有什么好的办法处理。
 
 heapsnapshot 文件的默认格式是：`./diat_$PID_$TS.heapsnapshot`，可通过`--file`改变指定生成文件的名称。
+
+#### 其他V8内存相关的profile
+
+除了 heapsnapshot，还可以直接通过diat生成 heapprofile 文件：
+
+```
+diat heapprofile -p <PID> -d 5000
+```
+
+和 heaptimeline 文件：
+
+```
+diat heaptimeline -p <PID> -d 5000
+```
+
+<img src="./imgs/heaptimeline.png" style="width: 55%;"/>
+
+其中 heap profile 不会阻塞线程、对进程影响较小，而 heap timeline 则可以获取到生成对象所对应的代码。更多细节可查看[官方文档](https://developers.google.com/web/tools/chrome-devtools/memory-problems/allocation-profiler)。
 
 ### perfbasicprof & perf2svg
 
@@ -230,6 +306,10 @@ Node.js 8 版本（目前已经退出 LTS）中的 inspector 有一些限制（�
 
 这些协议中包括和线程中的 inspector 进行通信的部分。diat 通过该协议让线程打开 inspector，从而允许外部接入。
 
+### 在Electron上使用
+
+你可以对 Electron 的 Node.js 进程中使用 diat。因为工作原理对 Node.js 进程是通用的，所以理论上 diat 对这些应用也是会生效的。
+
 ## Contributing
 
 项目使用 lerna 进行管理，`git clone` 项目后进行安装：
@@ -245,7 +325,7 @@ packages 文件夹下的 linux-perf、node-inspect 和 stackvis-simplified 是�
 
 提交代码前需要确保测试通过，并在 commit message 中描述对应的改动。测试可通过`npm run test`执行。
 
-已知问题：目前因为 jest 在检测 worker_threads 开启的线程上似乎有些问题，导致测试无法自动退出。
+已知问题：目前因为 jest 在检测 worker_threads 开启的线程上似乎有些问题，可能导致测试无法自动退出。
 
 ## License
 
