@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/diat.svg)](https://www.npmjs.com/package/diat)
 [![npm](https://img.shields.io/npm/l/diat.svg)](https://www.npmjs.com/package/diat)
+![npm test](https://github.com/bytedance/diat/workflows/npm%20test/badge.svg)
 
 [[中文文档]](./README.md)
 

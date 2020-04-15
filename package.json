@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "bootstrap": "./node_modules/.bin/lerna bootstrap && ./node_modules/.bin/lerna link",
-    "build": "cd packages/live-inspector && yarn build && cd ../diat && yarn build",
-    "test": "cd packages/diat && yarn test",
-    "ci": "cd packages/diat && yarn test:ci",
+    "build": "cd packages/live-inspector && npm run build && cd ../diat && npm run build",
+    "test": "cd packages/diat && npm run test",
+    "ci": "cd packages/diat && npm run test:ci",
     "postinstall": "npm run bootstrap && npm run build"
   },
   "devDependencies": {

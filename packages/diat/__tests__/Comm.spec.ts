@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import fetch from 'node-fetch'
 import { promisify } from 'util'
 import { Comm, getEvaluateResult } from '../src/Comm'
-import { createTestProcess, kTimeout, hasWorker } from './utils'
+import { createTestProcess, kTimeout, hasWorker, wait } from './utils'
 
 const readFile = promisify(fs.readFile)
 
@@ -31,6 +31,7 @@ describe('Comm', () => {
     afterEach(async () => {
       await comm.disconnect()
       child.kill()
+      await wait(100)
     })
 
     it('should throw for invalid parameters', () => {
@@ -215,7 +216,8 @@ describe('Comm', () => {
       'should open inspect port with specified port',
       async () => {
         const child = (await createTestProcess()).child
-        process.kill(child.pid, 'SIGUSR1')
+        ;(process as any)._debugProcess(child.pid)
+        await wait(200)
         const comm = new Comm(undefined, '127.0.0.1:9229')
 
         const ret = await comm.openInspect()
