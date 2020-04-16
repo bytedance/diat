@@ -6,7 +6,7 @@
 
 [[English Doc]](./README_EN.md)
 
-diat 是基于[inspector](https://nodejs.org/api/inspector.html)模块（提供: cpuprofile, heapsnapshot, debug 等能力）用于协助 Node.js 进程进行问题诊断的 CLI 工具。可以将diat当成是具有更多特性的`node-inspect`。
+diat 是基于 [inspector](https://nodejs.org/api/inspector.html) 模块（提供: cpuprofile, heapsnapshot, debug 等能力）用于协助 Node.js 进程进行问题诊断的 CLI 工具。可以将diat当成是具有更丰富特性的 `node-inspect`。
 
 ## 索引
 
@@ -34,7 +34,7 @@ diat 是基于[inspector](https://nodejs.org/api/inspector.html)模块（提供:
 
 ## 动机
 
-在解决 Node.js 服务端应用中发生的问题的过程中，我们发现**Node.js/V8 原生的 inspector 模块是解决各类问题最有效的工具**（不考虑大量使用 addon，因而需要排查 c/cpp 代码的情况），比如：用 cpuprofile 解决 cpu 使用率异常的问题；用 heapsnapshot 排查内存泄漏的问题等等；用Debugger 协议直接打 logpoint 甚至热更新代码来协助排查业务问题。
+在解决 Node.js 服务端应用中发生的问题的过程中，我们发现**Node.js/V8 原生的 inspector 模块是解决各类问题最有效的工具**（不考虑大量使用 addon 或排查其他底层 c/cpp 代码的情况），比如：用 cpuprofile 解决 cpu 使用率异常的问题；用 heapsnapshot 排查内存泄漏的问题等等；用Debugger 协议直接打 logpoint 甚至热更新代码来协助排查业务问题。
 
 并且不少 Node.js 开发者都具有 web 开发的经验，也就是说开发者学习利用 Chrome Devtools 进行问题排查可能是成本的最低途径之一。
 
@@ -64,6 +64,8 @@ diat 的代码本身就包含了一份改动过的 `node-inspect` 代码，通�
 - 退出后关闭 inspector server 释放9229端口，避免在有多个 Node.js 进程（或者说 V8 实例）的场景下 9229 端口被一个进程占用。
 - 支持更多特性：除了生成 cpuprofile 和 heapsnapshot，还支持生成 heapprofile 和 heaptimeline 文件。
 
+如果有适合放到 `node-inspect` 中的特性，我们会尝试提交PR到上游。
+
 ### 推荐的排查途径
 
 1. 如果环境允许外部网络访问，推荐直接开启 inspector server 并用 debugger 工具接入
@@ -79,7 +81,7 @@ npm i diat -g && diat --help
 
 ||Node.js 8|Node.js 10|Node.js 12|
 |---|---|---|---|
-|版本支持|⚠️ 使用上会有些限制|✅|✅|
+|版本支持|⚠️ 基本支持，但会有些限制|✅|✅|
 
 ## 使用场景介绍
 
@@ -308,7 +310,7 @@ Node.js 8 版本（目前已经退出 LTS）中的 inspector 有一些限制（�
 
 ### 在Electron上使用
 
-你可以对 Electron 的 Node.js 进程中使用 diat。因为工作原理对 Node.js 进程是通用的，所以理论上 diat 对这些应用也是会生效的。
+你可以对 Electron 的 Node.js 进程使用 diat。因为工作原理对 Node.js 进程是通用的，所以理论上 diat 对于这类应用都是生效的。
 
 ## Contributing
 
@@ -320,7 +322,7 @@ cd diat && npm install
 
 packages 文件夹下的 linux-perf、node-inspect 和 stackvis-simplified 是对社区里面的项目进行了些改造的代码。diat 自身的代码主要在：
 
-- packages/diat：CLI 命令行工具的主要代码
+- packages/diat：命令行工具的主要代码
 - packages/live-inspector：处理与 inspector 通信
 
 提交代码前需要确保测试通过，并在 commit message 中描述对应的改动。测试可通过`npm run test`执行。

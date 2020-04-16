@@ -1,5 +1,7 @@
 # CHANGELOG
 
+## 1.1.6
+
 ## 1.1.1
 docs: update README.md for the page of npm package
 

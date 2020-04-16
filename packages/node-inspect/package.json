@@ -15,10 +15,20 @@
   },
   "scripts": {
     "pretest": "eslint --rulesdir=tools/eslint-rules lib test",
-    "test": "tap test"
+    "test": "tap test",
+    "posttest": "nlm verify"
   },
+  "nlm": {
+    "license": {
+      "files": [
+        "lib"
+      ]
+    }
+  },
+  "dependencies": {},
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^3.10.2",
+    "nlm": "^3.0.0",
     "tap": "^10.7.0"
   },
   "author": {
