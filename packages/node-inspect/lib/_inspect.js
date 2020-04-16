@@ -30,15 +30,15 @@ const runAsStandalone = typeof __dirname !== 'undefined';
 const [ InspectClient, createRepl ] =
   runAsStandalone ?
   // This copy of node-inspect is on-disk, relative paths make sense.
-    [
-      require('./internal/inspect_client'),
-      require('./internal/inspect_repl')
-    ] :
+  [
+    require('./internal/inspect_client'),
+    require('./internal/inspect_repl')
+  ] :
   // This copy of node-inspect is built into the node executable.
-    [
-      require('node-inspect/lib/internal/inspect_client'),
-      require('node-inspect/lib/internal/inspect_repl')
-    ];
+  [
+    require('node-inspect/lib/internal/inspect_client'),
+    require('node-inspect/lib/internal/inspect_repl')
+  ];
 
 const debuglog = util.debuglog('inspect');
 
@@ -145,7 +145,7 @@ function createAgentProxy(domain, client) {
 
 class NodeInspector extends EventEmitter {
   constructor(options, stdin, stdout) {
-    super()
+    super();
     this.options = options;
     this.stdin = stdin;
     this.stdout = stdout;
@@ -190,8 +190,11 @@ class NodeInspector extends EventEmitter {
       .then((repl) => {
         this.repl = repl;
         this.repl.on('exit', () => {
-          // process.exit(0);
-          this.emit('replExit')
+          if (this.options.exitProcess) {
+            process.exit(0);
+          } else {
+            this.emit('replExit');
+          }
         });
         this.paused = false;
       })
@@ -336,7 +339,7 @@ function parseArgv([target, ...args]) {
 
 function startInspect(argv = process.argv.slice(2),
   stdin = process.stdin,
-  stdout = process.stdout) {
+  stdout = process.stdout, exitProcess = true) {
   /* eslint-disable no-console */
   if (argv.length < 1) {
     const invokedAs = runAsStandalone ?
@@ -350,6 +353,7 @@ function startInspect(argv = process.argv.slice(2),
   }
 
   const options = parseArgv(argv);
+  options.exitProcess = exitProcess;
   const inspector = new NodeInspector(options, stdin, stdout);
 
   stdin.resume();
@@ -370,6 +374,6 @@ function startInspect(argv = process.argv.slice(2),
   process.on('uncaughtException', handleUnexpectedError);
   /* eslint-enable no-console */
 
-  return inspector
+  return inspector;
 }
 exports.start = startInspect;
