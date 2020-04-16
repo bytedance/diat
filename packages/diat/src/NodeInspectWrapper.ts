@@ -24,12 +24,14 @@ export class NodeInspectWrapper {
   }
 
   startInspect = () => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const { host, port } = this.options
-
-      const argv = [`${host}:${port}`]
-
-      this.instance = nodeInspect.start(argv)
+      this.instance = nodeInspect.start(
+        [`${host}:${port}`],
+        process.stdin,
+        process.stdout,
+        false
+      )
       this.instance.on('replExit', () => {
         resolve()
       })

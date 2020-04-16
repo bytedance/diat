@@ -77,6 +77,9 @@ profiles[n].save(filepath = 'node.cpuprofile')
 
 takeHeapSnapshot(filepath = 'node.heapsnapshot')
                       Take a heap snapshot and save to disk as JSON.
+
+attachConsole()       Enter a console repl which prints messages when
+                      console API was called.
 `.trim();
 
 const FUNCTION_NAME_PATTERN = /^(?:function\*? )?([^(\s]+)\(/;
@@ -285,6 +288,68 @@ function aliasProperties(target, mapping) {
 
 function createRepl(inspector) {
   const { Debugger, HeapProfiler, Profiler, Runtime } = inspector;
+  let exitConsoleRepl;
+
+  class AttachedConsole {
+    handleArgs(ret) {
+      // TODO log file name
+      print(ret.args.map(i => util.inspect(new RemoteObject(i))).join(' '))
+    }
+
+    enable() {
+      const listeners = repl.listeners('SIGINT').slice(0);
+      repl.removeAllListeners('SIGINT');
+
+      const oldContext = repl.context;
+
+      exitConsoleRepl = () => {
+        Runtime.removeListener('consoleAPICalled', this.handleArgs);
+
+        // Restore all listeners
+        process.nextTick(() => {
+          listeners.forEach((listener) => {
+            repl.on('SIGINT', listener);
+          });
+        });
+
+        // Exit debug repl
+        repl.eval = controlEval;
+
+        // Swap history
+        history.debug = repl.history;
+        repl.history = history.control;
+
+        repl.context = oldContext;
+        repl.setPrompt('debug> ');
+        repl.displayPrompt();
+
+        repl.removeListener('SIGINT', exitConsoleRepl);
+        repl.removeListener('exit', exitConsoleRepl);
+
+        exitConsoleRepl = null;
+      };
+
+      // Exit debug repl on SIGINT
+      repl.on('SIGINT', exitConsoleRepl);
+      // Exit debug repl on repl exit
+      repl.on('exit', exitConsoleRepl);
+
+      // Set new
+      repl.eval = () => {};
+      repl.context = {};
+
+      // Swap history
+      history.control = repl.history;
+      repl.history = history.debug;
+
+      repl.setPrompt('');
+
+      print('Press Ctrl + C to leave console repl');
+      repl.displayPrompt();
+
+      Runtime.on('consoleAPICalled', this.handleArgs);
+    }
+  }
 
   let repl; // eslint-disable-line prefer-const
 
@@ -292,6 +357,7 @@ function createRepl(inspector) {
   const history = { control: [], debug: [] };
   const watchedExpressions = [];
   const knownBreakpoints = [];
+  const attachedConsole = new AttachedConsole();
   let pauseOnExceptionState = 'none';
   let lastCommand;
 
@@ -307,7 +373,9 @@ function createRepl(inspector) {
     selectedFrame = null;
 
     if (exitDebugRepl) exitDebugRepl();
+    if (exitConsoleRepl) exitConsoleRepl();
     exitDebugRepl = null;
+    exitConsoleRepl = null;
   }
   resetOnStart();
 
@@ -1045,6 +1113,10 @@ function createRepl(inspector) {
       },
 
       list,
+
+      get attachConsole() {
+        attachedConsole.enable();
+      },
     });
     aliasProperties(context, SHORTCUTS);
   }
