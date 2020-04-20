@@ -423,7 +423,6 @@ export class CLI {
         await this.attachRepl(comm, host, port)
         return
       }
-
       const { host, port, tcpProxy } = await comm.openInspect({
         port: proxyPort,
       })

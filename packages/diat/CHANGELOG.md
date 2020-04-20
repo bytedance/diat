@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.1
+fix: do not install diat-linux-perf on windows
+fix: inspect -a failed for a non 9229 port
+
 ## 1.2.0
 feat: support "attachConsole" in diat-node-inspect
 feat: support "setLogpoint" in diat-node-inspect
