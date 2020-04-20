@@ -193,3 +193,39 @@ test('clearBreakpoint', (t) => {
     .then(() => cli.quit())
     .then(null, onFatal);
 });
+
+test('setLogpoint', (t) => {
+  const script = Path.join('examples', 'alive.js');
+  const cli = startCLI([script]);
+
+  function onFatal(error) {
+    cli.quit();
+    throw error;
+  }
+
+  return cli.waitForInitialBreak()
+    .then(() => cli.waitForPrompt())
+    .then(() => cli.command('c'))
+    .then(() => cli.command('setLogpoint("alive.js", 3, "x")'))
+    .then(() => t.notMatch(cli.output, 'Could not resolve breakpoint'))
+    .then(() => cli.command('breakpoints'))
+    .then(() => {
+      t.match(cli.output, `#0 ${script}:3`);
+    })
+    .then(() => cli.command('attachConsole'))
+    .then(() => {
+      t.match(
+        cli.output,
+        'Press Ctrl + C to leave console repl',
+        'shows hint for how to leave repl');
+      t.notMatch(cli.output, 'debug>', 'changes the repl style');
+    })
+    .then(() => cli.command('clearBreakpoint("alive.js", 3)'))
+    .then(() => cli.command('breakpoints'))
+    .then(() => {
+      t.notMatch(cli.output, `#0 ${script}:3`);
+    })
+    .then(() => cli.waitFor(/\d+/))
+    .then(() => cli.quit())
+    .then(null, onFatal);
+});
