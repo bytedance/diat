@@ -1,5 +1,6 @@
 const semver = require('semver')
 const childProcess = require('child_process')
+const os = require('os')
 const packageJSON = require('./package.json')
 
 const kGypRebuildCmd = 'node-gyp rebuild'
@@ -9,7 +10,9 @@ function isEAccesMsg(msg) {
 }
 
 async function main() {
-  if (semver.satisfies(process.version, '>=10.4.0')) {
+  if (os.platform() === 'win32') {
+    console.warn(`win32 doesn't support ${packageJSON.name}`)
+  } else if (semver.satisfies(process.version, '>=10.4.0')) {
     const child = childProcess.exec(kGypRebuildCmd)
     let stderrStrs = ''
     child.stdout.on('data', (data) => {
