@@ -70,6 +70,9 @@ repl                  Enter a debug repl that works like exec
 
 scripts               List application scripts that are currently loaded
 scripts(true)         List all scripts (including node-internals)
+getScripts()          Get application scripts that are currently loaded
+scriptSource(script)
+                      Get the source of a script, require a scriptId or file
 
 profile               Start CPU profiling session.
 profileEnd            Stop current CPU profiling session.
@@ -420,12 +423,66 @@ function createRepl(inspector) {
       })
       .join('\n');
   }
+  function getScripts(displayNatives = false) {
+    function isVisible(script) {
+      if (displayNatives) return true;
+      return !script.isNative || isCurrentScript(script);
+    }
+
+    return Object.keys(knownScripts)
+      .filter(isVisible)
+      .map((scriptId) => knownScripts[scriptId]).map((script) => ({
+        scriptId: script.scriptId,
+        url: script.url,
+      }));
+  }
   function listScripts(displayNatives = false) {
     print(formatScripts(displayNatives));
   }
   listScripts[util.inspect.custom] = function listWithoutInternal() {
     return formatScripts();
   };
+
+  function scriptSource(script) {
+    if (!script) {
+      throw new Error('Requires script of a script');
+    }
+
+    let scriptId = null;
+    let ambiguous = false;
+    if (knownScripts[script]) {
+      scriptId = script;
+    } else {
+      for (const id of Object.keys(knownScripts)) {
+        const scriptUrl = knownScripts[id].url;
+        if (scriptUrl && scriptUrl.indexOf(script) !== -1) {
+          if (scriptId !== null) {
+            ambiguous = true;
+          }
+          scriptId = id;
+        }
+      }
+    }
+
+    if (ambiguous) {
+      print('Script name is ambiguous');
+      return undefined;
+    }
+
+    if (scriptId === null) {
+      throw new Error(`Could not find the script: ${scriptId}`);
+    }
+
+    return Debugger.getScriptSource({ scriptId }).then(({ scriptSource }) =>
+      new SourceSnippet({
+        scriptId,
+        lineNumber: 0,
+        columnNumber: 0,
+      }, Number.MAX_SAFE_INTEGER, scriptSource))
+      .then((snippet) => {
+        print(util.inspect(snippet));
+      });
+  }
 
   const profiles = [];
   class Profile {
@@ -1106,6 +1163,8 @@ function createRepl(inspector) {
       },
 
       scripts: listScripts,
+      getScripts,
+      scriptSource,
 
       setBreakpoint,
       setLogpoint,
