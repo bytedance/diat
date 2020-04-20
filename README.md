@@ -302,6 +302,8 @@ Node.js 8 版本（目前已经退出 LTS）中的 inspector 有一些限制（�
 
 因为这个限制的存在，也就意味着如果已经打开并接入了进程的 inspector 端口，比如：用 Chrome Devtools 接入。那后续接入 inspector 的尝试都会失败，diat 也就没办法生效。而有些工具，比如`pm2`中的某些配置，比如：`--max-memory-restart`，也会打开进程的 inspector 并接入，所以这种情况下新的接入也会失败。
 
+2. 新版本的 `node-inspect` 使用了 Node.js 8 所不支持的api，如: `require('url').fileURLToPath`，会导致部分命令在 Node.js 8 中失败。
+
 ## 工作原理
 
 ### 基本工作原理
@@ -315,7 +317,7 @@ Node.js 8 版本（目前已经退出 LTS）中的 inspector 有一些限制（�
 
 这些协议中包括和线程中的 inspector 进行通信的部分。diat 通过该协议让线程打开 inspector，从而允许外部接入。
 
-### 在Electron上使用
+## 在Electron上使用
 
 你可以对 Electron 的 Node.js 进程使用 diat。因为工作原理对 Node.js 进程是通用的，所以理论上 diat 对于这类应用都是生效的。
 
