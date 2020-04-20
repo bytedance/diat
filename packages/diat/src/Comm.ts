@@ -176,7 +176,7 @@ export class Comm {
     const fileStream = fs.createWriteStream(absPath)
 
     return new Promise<IFileResult>((resolve, reject) => {
-      const addChunk = data => {
+      const addChunk = (data) => {
         const { chunk } = data
         fileStream.write(chunk)
       }
@@ -236,7 +236,7 @@ export class Comm {
 
     await post('Profiler.start', null)
 
-    await new Promise(resolve => setTimeout(resolve, duration))
+    await new Promise((resolve) => setTimeout(resolve, duration))
 
     const res: any = await post('Profiler.stop', null)
 
@@ -280,7 +280,7 @@ export class Comm {
       samplingInterval: interval,
     })
 
-    await new Promise(resolve => setTimeout(resolve, duration))
+    await new Promise((resolve) => setTimeout(resolve, duration))
 
     const res: any = await post('HeapProfiler.stopSampling', null)
 
@@ -320,7 +320,7 @@ export class Comm {
 
     await post('HeapProfiler.enable', null)
 
-    const addChunk = data => {
+    const addChunk = (data) => {
       const { chunk } = data
       fileStream.write(chunk)
     }
@@ -331,7 +331,7 @@ export class Comm {
       trackAllocations: track,
     })
 
-    await new Promise(resolve => setTimeout(resolve, duration))
+    await new Promise((resolve) => setTimeout(resolve, duration))
 
     const res: any = await post('HeapProfiler.stopTrackingHeapObjects', null)
 
@@ -358,9 +358,7 @@ export class Comm {
       const addr = this.handle.getAddr() as any
       targetHost = addr.host
       targetPort = addr.port
-    }
-
-    if (port) {
+    } else {
       targetPort = port
     }
 

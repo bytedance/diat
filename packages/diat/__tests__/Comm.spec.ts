@@ -165,6 +165,26 @@ describe('Comm', () => {
       kTimeout
     )
 
+    it('should work with address of the inspector server', async () => {
+      const child = (await createTestProcess(undefined, ['--inspect=9230']))
+        .child
+      const comm = new Comm(undefined, '127.0.0.1:9230')
+      await comm.connect()
+
+      const ret = await comm.openInspect()
+      expect(ret).toEqual({
+        host: expect.anything(),
+        address: expect.anything(),
+        family: expect.anything(),
+        port: expect.anything(),
+        tcpProxy: expect.anything(),
+      })
+
+      await comm.disconnect()
+      child.kill()
+      await wait(100)
+    })
+
     it(
       'should open inspect port with specified port',
       async () => {

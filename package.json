@@ -4,7 +4,7 @@
   "scripts": {
     "bootstrap": "lerna bootstrap && lerna link",
     "build": "cd packages/live-inspector && npm run build && cd ../diat && npm run build",
-    "test": "cd packages/node-inspect && npm test && cd ../diat && npm test",
+    "test": "cd packages/diat && npm test",
     "postinstall": "npm run bootstrap && npm run build"
   },
   "devDependencies": {

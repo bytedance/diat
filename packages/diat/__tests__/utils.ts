@@ -6,15 +6,19 @@ const kFilePath = path.resolve(__dirname, './test_process/testIdleServer.js')
 
 export const kTimeout = 30 * 1000
 
-export function createTestProcess(requireFile?: string) {
+export function createTestProcess(requireFile?: string, execArgv?: string[]) {
   return new Promise<{ child: childProcess.ChildProcess; message: any }>(
     (resolve) => {
       const args = requireFile
         ? [path.resolve(__dirname, `./test_process/${requireFile}.js`)]
         : []
-      const child = childProcess.fork(kFilePath, args, {
+      const options: any = {
         env: {},
-      })
+      }
+      if (Array.isArray(execArgv)) {
+        options.execArgv = execArgv
+      }
+      const child = childProcess.fork(kFilePath, args, options)
 
       child.once('message', (message) => {
         resolve({
