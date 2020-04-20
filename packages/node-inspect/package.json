@@ -1,6 +1,6 @@
 {
   "name": "diat-node-inspect",
-  "version": "1.1.6",
+  "version": "1.2.1",
   "description": "Node Inspect",
   "license": "MIT",
   "main": "lib/_inspect.js",
@@ -17,7 +17,6 @@
     "pretest": "eslint --rulesdir=tools/eslint-rules lib test",
     "test": "tap test"
   },
-  "dependencies": {},
   "devDependencies": {
     "eslint": "^3.10.2",
     "tap": "^10.7.0"

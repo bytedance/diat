@@ -1,6 +1,6 @@
 {
   "name": "diat-live-inspector",
-  "version": "1.1.6",
+  "version": "1.2.1",
   "description": "开启一个Node.js进程的inspect端口，并与其通信",
   "main": "./lib/index.js",
   "license": "MIT",
