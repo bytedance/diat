@@ -36,6 +36,7 @@ const SHORTCUTS = {
   out: 'o',
   backtrace: 'bt',
   setBreakpoint: 'sb',
+  setLogpoint: 'sl',
   clearBreakpoint: 'cb',
   run: 'r',
 };
@@ -53,6 +54,7 @@ list                  Print the source around the current line where execution
                       is currently paused
 
 setBreakpoint, sb     Set a breakpoint
+setLogpoint, sl       Set a logpoint
 clearBreakpoint, cb   Clear a breakpoint
 breakpoints           List all known breakpoints
 breakOnException      Pause execution whenever an exception is thrown
@@ -78,7 +80,7 @@ profiles[n].save(filepath = 'node.cpuprofile')
 takeHeapSnapshot(filepath = 'node.heapsnapshot')
                       Take a heap snapshot and save to disk as JSON.
 
-attachConsole()       Enter a console repl which prints messages when
+attachConsole         Enter a console repl which prints messages when
                       console API was called.
 `.trim();
 
@@ -293,7 +295,8 @@ function createRepl(inspector) {
   class AttachedConsole {
     handleArgs(ret) {
       // TODO log file name
-      print(ret.args.map(i => util.inspect(new RemoteObject(i))).join(' '))
+      // eslint-disable-next-line
+      print(ret.args.map(i => util.inspect(new RemoteObject(i))).join(' '));
     }
 
     enable() {
@@ -342,7 +345,7 @@ function createRepl(inspector) {
       history.control = repl.history;
       repl.history = history.debug;
 
-      repl.setPrompt('');
+      repl.setPrompt('> ');
 
       print('Press Ctrl + C to leave console repl');
       repl.displayPrompt();
@@ -809,6 +812,11 @@ function createRepl(inspector) {
       });
   }
 
+  function setLogpoint(script, line, logArgs) {
+    return setBreakpoint(script, line,
+        `/** DEVTOOLS_LOGPOINT */ console.log(${logArgs})`);
+  }
+
   function clearBreakpoint(url, line) {
     const breakpoint = knownBreakpoints.find(({ location }) => {
       if (!location) return false;
@@ -1100,6 +1108,7 @@ function createRepl(inspector) {
       scripts: listScripts,
 
       setBreakpoint,
+      setLogpoint,
       clearBreakpoint,
       setPauseOnExceptions,
       get breakOnException() {

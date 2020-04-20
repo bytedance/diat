@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.0
+feat: support "attachConsole" in diat-node-inspect
+feat: support "setLogpoint" in diat-node-inspect
+
 ## 1.1.6
 
 ## 1.1.1
