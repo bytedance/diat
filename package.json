@@ -2,10 +2,9 @@
   "name": "diat",
   "private": true,
   "scripts": {
-    "bootstrap": "./node_modules/.bin/lerna bootstrap && ./node_modules/.bin/lerna link",
+    "bootstrap": "lerna bootstrap && lerna link",
     "build": "cd packages/live-inspector && npm run build && cd ../diat && npm run build",
-    "test": "cd packages/diat && npm run test",
-    "ci": "cd packages/diat && npm run test:ci",
+    "test": "cd packages/node-inspect && npm test && cd ../diat && npm test",
     "postinstall": "npm run bootstrap && npm run build"
   },
   "devDependencies": {
