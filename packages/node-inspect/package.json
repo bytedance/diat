@@ -25,6 +25,7 @@
       ]
     }
   },
+  "dependencies": {},
   "devDependencies": {
     "eslint": "^3.10.2",
     "nlm": "^3.0.0",
