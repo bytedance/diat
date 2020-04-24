@@ -506,9 +506,8 @@ export class CLI {
 
   main = async () => {
     const { uploadFile } = this.options
-    // TODO
-    const hasuploadFunction = typeof uploadFile === 'function' && false
-    const uploadOpts = hasuploadFunction
+    const hasUploadFunction = typeof uploadFile === 'function'
+    const uploadOpts = hasUploadFunction
       ? {
           u: {
             alias: 'upload',
@@ -659,7 +658,7 @@ export class CLI {
       this.heapTimeline
     )
 
-    if (hasuploadFunction) {
+    if (hasUploadFunction) {
       yargs.command(
         'upload',
         'diat upload -f=<filename>\nUpload a .cpuprofile/.heapsnapshot file for later inspecting.',

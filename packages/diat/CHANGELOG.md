@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 1.2.3
+fix: respect option of "uploadFile"
+
 ## 1.2.1
 fix: do not install diat-linux-perf on windows
 fix: inspect -a failed for a non 9229 port

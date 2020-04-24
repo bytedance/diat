@@ -20,7 +20,7 @@ diat 是基于 [inspector](https://nodejs.org/api/inspector.html) 模块（提�
   - [inspect](#inspect)
     - [关闭inspector](#关闭inspector)
   - [inspectworker](#inspectworker)
-  - [repl](#repl)
+  - [命令行调试](#命令行调试)
   - [metric](#metric)
   - [cpuprofile](#cpuprofile)
   - [heapsnapshot](#heapsnapshot)
@@ -150,7 +150,7 @@ __tests__/test_process/thread_worker.js]
 
 因为目前 Node.js 对 worker_threads 中的 inspector 的支持有所缺失（或者说未来 worker_threads 的调试方式不一定是以 inspector 为主），所以目前 diat 打开线程中的 inspector 后无法关闭。
 
-### repl
+### 命令行调试
 
 前面介绍了用 `inspect` 和 `inspectworker` 打开 inspector 的方式，但在一些环境中我们并不能用外部 debugger 接入，比如：网络隔离的情况。这种情况下我们可以利用 `-r` 配置在命令行上进行调试，如：
 
