@@ -128,6 +128,13 @@ function startCLI(args, flags = []) {
       return this.command('.interrupt');
     },
 
+    completer(input) {
+      if (!input) {
+        return this.writeLine('.completer');
+      }
+      return this.writeLine(`.completer ${input}`);
+    },
+
     get output() {
       return getOutput();
     },

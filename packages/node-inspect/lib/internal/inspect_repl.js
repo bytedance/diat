@@ -669,6 +669,55 @@ function createRepl(inspector) {
     }
   }
 
+  function getObjectProperties(input) {
+    // Get objectId
+    return Runtime.evaluate({
+      expression: input,
+      objectGroup: 'node-inspect',
+      includeCommandLineAPI: true,
+      generatePreview: true,
+    }).then(({ result }) => {
+      if (result.type === 'object' && result.objectId) {
+        return result.objectId;
+      }
+      return Promise.reject(new Error('non-objects'));
+    }).then((objectId) => {
+      // Get properties of the object
+      return Runtime.getProperties({
+        objectId,
+        ownProperties: false,
+      });
+    }).then((ret) => {
+      if (!Array.isArray(ret.result)) {
+        return [];
+      }
+      return ret.result.map((i) => i.name).sort((a, b) => {
+        return ((a > b) ? 1 : -1);
+      });
+    });
+  }
+
+  function completer(linePartial, callback) {
+    const dotIndex = linePartial.indexOf('.');
+    const isGlobal = linePartial.length === 0;
+    const objectToSearch = dotIndex < 0 ?
+      'global' : linePartial.slice(0, dotIndex);
+    const propertyExpression = linePartial.slice(dotIndex + 1);
+    getObjectProperties(objectToSearch).then((ret) => {
+      const matchedProperties = propertyExpression ?
+        ret.filter((i) => i.startsWith(propertyExpression)) : ret;
+      if (matchedProperties.length === 1) {
+        callback(null, [matchedProperties, propertyExpression]);
+      } else {
+        const properties = isGlobal ? matchedProperties :
+          matchedProperties.map((i) => `${objectToSearch}.${i}`);
+        callback(null, [properties, linePartial]);
+      }
+    }).catch((err) => {
+      callback(null, [[], linePartial]);
+    });
+  }
+
   function debugEval(input, context, filename, callback) {
     debuglog('eval:', input);
     function returnToCallback(error, result) {
@@ -1220,6 +1269,7 @@ function createRepl(inspector) {
       eval: controlEval,
       useGlobal: false,
       ignoreUndefined: true,
+      completer,
     };
 
     repl = Repl.start(replOptions); // eslint-disable-line prefer-const
@@ -1229,6 +1279,15 @@ function createRepl(inspector) {
     repl.defineCommand('interrupt', () => {
       // We want this for testing purposes where sending CTRL-C can be tricky.
       repl.emit('SIGINT');
+    });
+
+    repl.defineCommand('completer', (name) => {
+      // Use this for testing "completer" as sending "tab" can be tricky.
+      completer(name, (err, [substrs, originalsubstring]) => {
+        substrs.forEach((item) => {
+          print(item);
+        });
+      });
     });
 
     // Init once for the initial connection
