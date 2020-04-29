@@ -38,6 +38,7 @@ const SHORTCUTS = {
   setBreakpoint: 'sb',
   setLogpoint: 'sl',
   clearBreakpoint: 'cb',
+  clearBreakpoints: 'cbs',
   run: 'r',
 };
 
@@ -56,6 +57,7 @@ list                  Print the source around the current line where execution
 setBreakpoint, sb     Set a breakpoint
 setLogpoint, sl       Set a logpoint
 clearBreakpoint, cb   Clear a breakpoint
+clearBreakpoints, cbs Clear all breakpoints
 breakpoints           List all known breakpoints
 breakOnException      Pause execution whenever an exception is thrown
 breakOnUncaught       Pause execution whenever an exception isn't caught
@@ -943,6 +945,22 @@ function createRepl(inspector) {
       });
   }
 
+  async function clearBreakpoints() {
+    if (knownBreakpoints.length === 0) {
+      print(`Could not find breakpoint`);
+      return Promise.resolve();
+    }
+
+    for (const breakpoint of knownBreakpoints) {
+      console.log('breakpointbreakpoint', breakpoint);
+      await Debugger.removeBreakpoint({ breakpointId: breakpoint.breakpointId })
+        .then(() => {
+          const idx = knownBreakpoints.indexOf(breakpoint);
+          knownBreakpoints.splice(idx, 1);
+        });
+    }
+  }
+
   function restoreBreakpoints() {
     const lastBreakpoints = knownBreakpoints.slice();
     knownBreakpoints.length = 0;
@@ -1218,6 +1236,7 @@ function createRepl(inspector) {
       setBreakpoint,
       setLogpoint,
       clearBreakpoint,
+      clearBreakpoints,
       setPauseOnExceptions,
       get breakOnException() {
         return setPauseOnExceptions('all');

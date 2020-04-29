@@ -5,6 +5,10 @@ const { test } = require('tap');
 
 const startCLI = require('./start-cli');
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 test('stepping through breakpoints', (t) => {
   const script = Path.join('examples', 'break.js');
   const cli = startCLI([script]);
@@ -189,6 +193,16 @@ test('clearBreakpoint', (t) => {
         cli.output,
         `break in ${script}:9`,
         'hits the 2nd breakpoint because the 1st was cleared');
+    })
+    .then(() => cli.command('sb("break.js", 3)'))
+    .then(() => cli.command('breakpoints'))
+    .then(() => {
+      t.match(cli.output, `#0 ${script}:9`);
+      t.match(cli.output, `#1 ${script}:3`);
+    })
+    .then(() => cli.command('clearBreakpoints()'))
+    .then(() => {
+      t.notMatch(cli.output, `#0`, 'no breakpoints remains');
     })
     .then(() => cli.quit())
     .then(null, onFatal);
