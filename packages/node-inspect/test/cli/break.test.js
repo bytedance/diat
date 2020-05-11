@@ -5,9 +5,9 @@ const { test } = require('tap');
 
 const startCLI = require('./start-cli');
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// function delay(ms) {
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }
 
 test('stepping through breakpoints', (t) => {
   const script = Path.join('examples', 'break.js');
@@ -202,6 +202,7 @@ test('clearBreakpoint', (t) => {
     })
     .then(() => cli.command('clearBreakpoints()'))
     .then(() => {
+      // eslint-disable-next-line
       t.notMatch(cli.output, `#0`, 'no breakpoints remains');
     })
     .then(() => cli.quit())

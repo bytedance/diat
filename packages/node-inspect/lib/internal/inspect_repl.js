@@ -166,6 +166,69 @@ function convertResultToError(result) {
   return err;
 }
 
+function mergeCompletions(filterStr, completionsList) {
+  const completionSet = new Set();
+  completionsList.forEach((completions) => {
+    if (Array.isArray(completions)) {
+      completions.forEach((completion) => {
+        completionSet.add(completion);
+      });
+    }
+  });
+  return [...completionSet].filter((i) => i.startsWith(filterStr));
+}
+
+// eslint-disable-next-line
+// From: https://github.com/ChromeDevTools/devtools-frontend/blob/674ff27940f84a90812fcd22c368fbe04d9f924b/front_end/object_ui/JavaScriptAutocomplete.js#L442
+function getCompletionsFunc(type) {
+  let object;
+  if (type === 'string') {
+    object = new String('');
+  } else if (type === 'number') {
+    object = new Number(0);
+  } else if (type === 'bigint') {
+    object = Object(BigInt(0));
+  } else if (type === 'boolean') {
+    object = new Boolean(false);
+  } else {
+    object = this;
+  }
+
+  const result = [];
+  try {
+    for (let o = object; o; o = Object.getPrototypeOf(o)) {
+      if ((type === 'array' || type === 'typedarray') &&
+        o === object && o.length > 9999) {
+        continue;
+      }
+
+      const group = {items: [], __proto__: null};
+      try {
+        if (typeof o === 'object'
+          && Object.prototype.hasOwnProperty.call(o, 'constructor')
+          && o.constructor
+          && o.constructor.name) {
+          group.title = o.constructor.name;
+        }
+      } catch (ee) {
+        // we could break upon cross origin check.
+      }
+      result[result.length] = group;
+      const names = Object.getOwnPropertyNames(o);
+      const isArray = Array.isArray(o);
+      for (let i = 0; i < names.length && group.items.length < 10000; ++i) {
+        // Skip array elements indexes.
+        if (isArray && /^[0-9]/.test(names[i])) {
+          continue;
+        }
+        group.items[group.items.length] = names[i];
+      }
+    }
+  } catch (e) {
+  }
+  return result;
+}
+
 class RemoteObject {
   constructor(attributes) {
     Object.assign(this, attributes);
@@ -564,10 +627,10 @@ function createRepl(inspector) {
       Object.assign(this, callFrame);
     }
 
-    loadScopes() {
+    loadScopes(filterGlobal = true) {
       return Promise.all(
         this.scopeChain
-          .filter((scope) => scope.type !== 'global')
+          .filter((scope) => !filterGlobal || scope.type !== 'global')
           .map((scope) => {
             const { objectId } = scope.object;
             return Runtime.getProperties({
@@ -671,53 +734,120 @@ function createRepl(inspector) {
     }
   }
 
-  function getObjectProperties(input) {
-    // Get objectId
-    return Runtime.evaluate({
-      expression: input,
-      objectGroup: 'node-inspect',
-      includeCommandLineAPI: true,
-      generatePreview: true,
-    }).then(({ result }) => {
-      if (result.type === 'object' && result.objectId) {
-        return result.objectId;
-      }
-      return Promise.reject(new Error('non-objects'));
-    }).then((objectId) => {
-      // Get properties of the object
-      return Runtime.getProperties({
-        objectId,
-        ownProperties: false,
+  function getScopeProperties() {
+    if (!selectedFrame) {
+      return Promise.resolve([]);
+    }
+
+    return selectedFrame.loadScopes(false).then((scopes) => {
+      const completionSet = new Set();
+      scopes.forEach((scope) => {
+        scope.completionGroup.forEach((completion) => {
+          completionSet.add(completion);
+        });
       });
-    }).then((ret) => {
-      if (!Array.isArray(ret.result)) {
-        return [];
-      }
-      return ret.result.map((i) => i.name).sort((a, b) => {
-        return ((a > b) ? 1 : -1);
-      });
+      return [...completionSet.keys()];
+    }).catch((err) => {
+      return [];
     });
   }
 
-  function completer(linePartial, callback) {
-    const dotIndex = linePartial.indexOf('.');
-    const isGlobal = linePartial.length === 0;
-    const objectToSearch = dotIndex < 0 ?
-      'global' : linePartial.slice(0, dotIndex);
-    const propertyExpression = linePartial.slice(dotIndex + 1);
-    getObjectProperties(objectToSearch).then((ret) => {
-      const matchedProperties = propertyExpression ?
-        ret.filter((i) => i.startsWith(propertyExpression)) : ret;
-      if (matchedProperties.length === 1) {
-        callback(null, [matchedProperties, propertyExpression]);
-      } else {
-        const properties = isGlobal ? matchedProperties :
-          matchedProperties.map((i) => `${objectToSearch}.${i}`);
-        callback(null, [properties, linePartial]);
+  function getCompletions(input) {
+    const objectGroup = 'completion';
+    const evalOptions = {
+      expression: input,
+      objectGroup,
+      includeCommandLineAPI: true,
+      silent: true,
+      returnByValue: false,
+      generatePreview: false,
+      throwOnSideEffect: true,
+    };
+    const evaluate = selectedFrame ? Debugger.evaluateOnCallFrame(
+      Object.assign(evalOptions, {
+        callFrameId: selectedFrame.callFrameId
+      })
+    ) : Runtime.evaluate(evalOptions);
+
+    return evaluate.then(({ result }) => {
+      // TODO show "proxy" differently
+      if (result.type === 'object' || result.type === 'function') {
+        return Runtime.callFunctionOn({
+          functionDeclaration: getCompletionsFunc.toString(),
+          objectId: result.objectId,
+          // For now, we only autocomplete "object" and "function"
+          // so that we ignore the "type" argument here.
+          arguments: [],
+          silent: true,
+          returnByValue: true,
+        }).then((ret) => {
+          if (ret.result && Array.isArray(ret.result.value)) {
+            let completions = [];
+            ret.result.value.forEach((group) => {
+              completions = completions.concat(group.items);
+            });
+            return completions;
+          }
+
+          return [];
+        });
       }
-    }).catch((err) => {
-      callback(null, [[], linePartial]);
-    });
+
+      return [];
+    })
+      .then((ret) => {
+        Runtime.releaseObjectGroup({
+          objectGroup
+        });
+        // eslint-disable-next-line
+        return ret.sort((a, b) => ((a > b) ? 1 : -1));
+      })
+      .catch(() => ([]));
+  }
+
+  function completer(line, callback) {
+    // eslint-disable-next-line
+    // From: https://github.com/nodejs/node/blob/bcdbd57134558e3bea730f8963881e8865040f6f/lib/repl.js#L1233
+    const simpleExpressionRE
+      = /(?:[a-zA-Z_$](?:\w|\$)*\.)*[a-zA-Z_$](?:\w|\$)*\.?$/;
+    const match = simpleExpressionRE.exec(line);
+    if (line.length !== 0 && !match) {
+      callback(null, [[], line]);
+      return;
+    }
+    const completeOn = (match ? match[0] : '');
+    let expr;
+    let filter;
+    if (line.length === 0) {
+      filter = '';
+      expr = '';
+    } else if (line[line.length - 1] === '.') {
+      filter = '';
+      expr = match[0].slice(0, match[0].length - 1);
+    } else {
+      const bits = match[0].split('.');
+      filter = bits.pop();
+      expr = bits.join('.');
+    }
+
+    if (!expr && selectedFrame) {
+      getScopeProperties()
+        .then((completions) => mergeCompletions(filter, [completions]))
+        .then((completions) => callback(null, [completions, completeOn]));
+    } else if (!expr) {
+      Promise.all([
+        Runtime.globalLexicalScopeNames().then((ret) => ret.names),
+        getCompletions('this')
+      ])
+        .then(mergeCompletions.bind(null, filter))
+        .then((completions) => callback(null, [completions, completeOn]));
+    } else {
+      getCompletions(expr).then((completions) => {
+        const completionsWithExpr = mergeCompletions(filter, [completions])
+          .map((i) => `${expr}.${i}`);
+        callback(null, [completionsWithExpr, completeOn]);
+      });
+    }
   }
 
   function debugEval(input, context, filename, callback) {
@@ -947,6 +1077,7 @@ function createRepl(inspector) {
 
   async function clearBreakpoints() {
     if (knownBreakpoints.length === 0) {
+      // eslint-disable-next-line
       print(`Could not find breakpoint`);
       return Promise.resolve();
     }
@@ -1173,6 +1304,7 @@ function createRepl(inspector) {
         repl.removeAllListeners('SIGINT');
 
         const oldContext = repl.context;
+        const oldCompleter = repl.completer;
 
         exitDebugRepl = () => {
           // Restore all listeners
@@ -1184,6 +1316,7 @@ function createRepl(inspector) {
 
           // Exit debug repl
           repl.eval = controlEval;
+          repl.completer = oldCompleter;
 
           // Swap history
           history.debug = repl.history;
@@ -1207,6 +1340,7 @@ function createRepl(inspector) {
 
         // Set new
         repl.eval = debugEval;
+        repl.completer = completer;
         repl.context = {};
 
         // Swap history
@@ -1303,9 +1437,7 @@ function createRepl(inspector) {
     repl.defineCommand('completer', (name) => {
       // Use this for testing "completer" as sending "tab" can be tricky.
       completer(name, (err, [substrs, originalsubstring]) => {
-        substrs.forEach((item) => {
-          print(item);
-        });
+        print(substrs.join('\n') + '\n');
       });
     });
 
