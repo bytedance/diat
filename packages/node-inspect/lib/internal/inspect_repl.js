@@ -538,12 +538,13 @@ function createRepl(inspector) {
       throw new Error(`Could not find the script: ${scriptId}`);
     }
 
-    return Debugger.getScriptSource({ scriptId }).then(({ scriptSource }) =>
-      new SourceSnippet({
-        scriptId,
-        lineNumber: 0,
-        columnNumber: 0,
-      }, Number.MAX_SAFE_INTEGER, scriptSource))
+    return Debugger.getScriptSource({ scriptId: String(scriptId) })
+      .then(({ scriptSource }) =>
+        new SourceSnippet({
+          scriptId,
+          lineNumber: 0,
+          columnNumber: 0,
+        }, Number.MAX_SAFE_INTEGER, scriptSource))
       .then((snippet) => {
         print(util.inspect(snippet));
       });
@@ -617,7 +618,7 @@ function createRepl(inspector) {
 
   function getSourceSnippet(location, delta = 5) {
     const { scriptId } = location;
-    return Debugger.getScriptSource({ scriptId })
+    return Debugger.getScriptSource({ scriptId: String(scriptId) })
       .then(({ scriptSource }) =>
         new SourceSnippet(location, delta, scriptSource));
   }
@@ -1421,7 +1422,12 @@ function createRepl(inspector) {
       eval: controlEval,
       useGlobal: false,
       ignoreUndefined: true,
-      completer,
+      completer: (line) => {
+        return [
+          Object.keys(repl.context).filter((i) => i.startsWith(line)),
+          line
+        ];
+      },
     };
 
     repl = Repl.start(replOptions); // eslint-disable-line prefer-const
