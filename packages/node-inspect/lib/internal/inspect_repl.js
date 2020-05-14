@@ -413,7 +413,7 @@ function createRepl(inspector) {
       history.control = repl.history;
       repl.history = history.debug;
 
-      repl.setPrompt('> ');
+      repl.setPrompt('');
 
       print('Press Ctrl + C to leave console repl');
       repl.displayPrompt();
@@ -1083,7 +1083,6 @@ function createRepl(inspector) {
     }
 
     for (const breakpoint of knownBreakpoints) {
-      console.log('breakpointbreakpoint', breakpoint);
       await Debugger.removeBreakpoint({ breakpointId: breakpoint.breakpointId })
         .then(() => {
           const idx = knownBreakpoints.indexOf(breakpoint);

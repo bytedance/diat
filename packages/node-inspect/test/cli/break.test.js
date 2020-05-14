@@ -227,7 +227,8 @@ test('setLogpoint', (t) => {
     .then(() => {
       t.match(cli.output, `#0 ${script}:3`);
     })
-    .then(() => cli.command('attachConsole'))
+    .then(() => cli.writeLine('attachConsole'))
+    .then(() => cli.waitFor(/leave console repl/))
     .then(() => {
       t.match(
         cli.output,
@@ -235,12 +236,12 @@ test('setLogpoint', (t) => {
         'shows hint for how to leave repl');
       t.notMatch(cli.output, 'debug>', 'changes the repl style');
     })
+    .then(() => cli.ctrlC())
     .then(() => cli.command('clearBreakpoint("alive.js", 3)'))
     .then(() => cli.command('breakpoints'))
     .then(() => {
       t.notMatch(cli.output, `#0 ${script}:3`);
     })
-    .then(() => cli.waitFor(/\d+/))
     .then(() => cli.quit())
     .then(null, onFatal);
 });
