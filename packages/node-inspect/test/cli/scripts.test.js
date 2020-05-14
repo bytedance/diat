@@ -71,6 +71,7 @@ test('get scripts', (t) => {
 test('source', (t) => {
   const script = Path.join('examples', 'alive.js');
   const cli = startCLI([script]);
+  let scriptId = null;
 
   function onFatal(error) {
     cli.quit();
@@ -88,9 +89,16 @@ test('source', (t) => {
       const ret = /\* (\d+): examples(?:\/|\\)alive\.js/.exec(cli.output);
       return ret[1];
     })
-    .then((scriptId) => cli.command(`source("${scriptId}")`))
+    .then((id) => {
+      scriptId = id;
+      return cli.command(`source("${scriptId}")`);
+    })
     .then(() => {
       t.match(cli.output, /1 let x = 0/, 'print source of the script');
+    })
+    .then(() => cli.command(`source(${scriptId})`))
+    .then(() => {
+      t.match(cli.output, /1 let x = 0/, 'accept a number as scriptId');
     })
     .then(() => cli.command('source("alive.js")'))
     .then(() => {

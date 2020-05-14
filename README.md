@@ -69,7 +69,7 @@ diat 的代码本身就包含了一份改动过的 `node-inspect` 代码，通�
 - 支持 `attachConsole` 来输出主线程中 `console` 输出的内容。
 - 支持 `setLogpoint()` 来设置不会中断线程运行的 logpoint。logpoint 也是一种 breakpoint，所以可以通过 `clearBreakpoint()` 来清除。
 - 支持 `getScripts()` 返回scripts的数据（而不是打印出来），从而可以在通过js表达式筛选自己需要的脚本，用于进程的文件很多的情况。
-- 支持 `scriptSource(scriptId)` 返回一个js脚本完成的内容。
+- 支持 `source(scriptId)` 返回一个js脚本完整的内容。
 
 如果有适合放到 `node-inspect` 中的特性，我们会尝试提交PR到上游。
 
