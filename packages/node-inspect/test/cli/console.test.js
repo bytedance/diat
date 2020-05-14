@@ -15,7 +15,8 @@ test('attachConsole', (t) => {
     .then(() => cli.command('c'))
     .then(() =>
       cli.command('exec setInterval(() => { console.log("hello") }, 100)'))
-    .then(() => cli.command('attachConsole'))
+    .then(() => cli.writeLine('attachConsole'))
+    .then(() => cli.waitFor(/leave console repl/))
     .then(() => {
       t.match(
         cli.output,
