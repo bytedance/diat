@@ -68,7 +68,7 @@ test('get scripts', (t) => {
     .then(null, onFatal);
 });
 
-test('scriptSource', (t) => {
+test('source', (t) => {
   const script = Path.join('examples', 'alive.js');
   const cli = startCLI([script]);
 
@@ -88,11 +88,11 @@ test('scriptSource', (t) => {
       const ret = /\* (\d+): examples(?:\/|\\)alive\.js/.exec(cli.output);
       return ret[1];
     })
-    .then((scriptId) => cli.command(`scriptSource("${scriptId}")`))
+    .then((scriptId) => cli.command(`source("${scriptId}")`))
     .then(() => {
       t.match(cli.output, /1 let x = 0/, 'print source of the script');
     })
-    .then(() => cli.command('scriptSource("alive.js")'))
+    .then(() => cli.command('source("alive.js")'))
     .then(() => {
       t.match(cli.output, /1 let x = 0/, 'print source of the script');
     })

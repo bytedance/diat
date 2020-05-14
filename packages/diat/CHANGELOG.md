@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.3.1
+refactor: rename "scriptSource" "source"
+chore: remove redundant console.log
+
 ## 1.2.1
 fix: do not install diat-linux-perf on windows
 fix: inspect -a failed for a non 9229 port

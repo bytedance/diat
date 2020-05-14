@@ -73,7 +73,7 @@ repl                  Enter a debug repl that works like exec
 scripts               List application scripts that are currently loaded
 scripts(true)         List all scripts (including node-internals)
 getScripts()          Get application scripts that are currently loaded
-scriptSource(script)
+source(script)
                       Get the source of a script, require a scriptId or file
 
 profile               Start CPU profiling session.
@@ -508,7 +508,7 @@ function createRepl(inspector) {
     return formatScripts();
   };
 
-  function scriptSource(script) {
+  function source(script) {
     if (!script) {
       throw new Error('Requires script of a script');
     }
@@ -1364,7 +1364,7 @@ function createRepl(inspector) {
 
       scripts: listScripts,
       getScripts,
-      scriptSource,
+      source,
 
       setBreakpoint,
       setLogpoint,
