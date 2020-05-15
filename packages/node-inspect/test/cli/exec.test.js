@@ -34,6 +34,15 @@ test('examples/alive.js', (t) => {
         '[ \'function\', \'function\' ]', 'can evaluate in the repl');
       t.match(cli.output, /> $/);
     })
+    .then(() => cli.command('require'))
+    .then(() => cli.waitFor(/require/))
+    .then(() => cli.waitForPrompt())
+    .then(() => {
+      t.match(
+        cli.output,
+        '[Function: require]', 'can access "require"');
+      t.match(cli.output, /> $/);
+    })
     .then(() => cli.ctrlC())
     .then(() => cli.waitFor(/debug> $/))
     .then(() => cli.command('exec("[typeof heartbeat, typeof process.exit]")'))
