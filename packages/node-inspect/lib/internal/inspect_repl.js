@@ -258,7 +258,9 @@ class RemoteObject {
             return opts.stylize(prop.value, 'special');
           }
           return opts.stylize(prop.value, prop.subtype || 'special');
-
+        case 'function':
+          const formatted = `[Function: ${prop.name}]`;
+          return opts.stylize(formatted, 'special');
         default:
           return prop.value;
       }
@@ -364,7 +366,7 @@ function createRepl(inspector) {
     handleArgs(ret) {
       // TODO log file name
       // eslint-disable-next-line
-      print(ret.args.map(i => util.inspect(new RemoteObject(i))).join(' '));
+      print(ret.args.map(i => inspect(new RemoteObject(i))).join(' '));
     }
 
     enable() {
