@@ -1,6 +1,7 @@
 # CHANGELOG
 
-## 1.3.1
+## 1.4.0
+feat: add "perf" command to wrap relative commands
 refactor: set "includeCommandLineAPI" true to allow "require" in repl
 refactor: accept a number as a "scriptId" for "source()"
 refactor: rename "scriptSource" "source"

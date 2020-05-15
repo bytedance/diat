@@ -36,7 +36,8 @@ const kDevtoolsUrl = `devtools://devtools/bundled/js_app.html?experiments=true&v
 export async function getFirstSessionURL(
   host: string,
   port: number,
-  ip: string | null
+  ip: string | null,
+  getProxyUrl?: (url: string) => Promise<string | null>
 ): Promise<string> {
   ip = ip || kPublicIpPlaceholder
   const res = await fetch(`http://${host}:${port}/json`)
@@ -53,7 +54,16 @@ export async function getFirstSessionURL(
     throw new Error('invalid meta')
   }
 
-  return `${kDevtoolsUrl}${ip}:${port}/${id}`
+  let addr = `${ip}:${port}/${id}`
+
+  if (typeof getProxyUrl === 'function') {
+    const proxyUrl = await getProxyUrl(addr)
+    if (proxyUrl) {
+      addr = proxyUrl
+    }
+  }
+
+  return `${kDevtoolsUrl}${addr}`
 }
 
 export function getPublicIP(): Promise<string | null> {
@@ -61,7 +71,7 @@ export function getPublicIP(): Promise<string | null> {
 
   if (Array.isArray(interfaces.en0) && interfaces.en0.length > 0) {
     const { en0 } = interfaces
-    const ipv4Item = en0.find(i => i.family === 'IPv4')
+    const ipv4Item = en0.find((i) => i.family === 'IPv4')
     if (ipv4Item) {
       return Promise.resolve(ipv4Item.address)
     }

@@ -25,7 +25,7 @@ diat 是基于 [inspector](https://nodejs.org/api/inspector.html) 模块（提�
   - [cpuprofile](#cpuprofile)
   - [heapsnapshot](#heapsnapshot)
     - [其他V8内存相关的profile](#其他V8内存相关的profile)
-  - [perfbasicprof & perf2svg](#perfbasicprof--perf2svg)
+  - [用perf生成火焰图](#用perf生成火焰图)
 - [已知限制](#已知限制)
 - [工作原理](#工作原理)
 - [在Electron上使用](#在Electron上使用)
@@ -240,9 +240,25 @@ diat heaptimeline -p <PID> -d 5000
 
 其中 heap profile 不会阻塞线程、对进程影响较小，而 heap timeline 则可以获取到生成对象所对应的代码。更多细节可查看[官方文档](https://developers.google.com/web/tools/chrome-devtools/memory-problems/allocation-profiler)。
 
-### perfbasicprof & perf2svg
+### 用perf生成火焰图
+
+> 关于 `perf` + `--perf-basic-prof` 的用法也可以参考 [diagnostics-flamegraph](https://nodejs.org/en/docs/guides/diagnostics-flamegraph/)。
 
 cpu profile 对于排查 js 中与 cpu 相关的问题很有帮助。但是因为 cpu profile 是 V8 记录的 js 中的函数执行情况，所以对于 Node.js 底层代码中或 addon 代码中的函数调用情况，我们没办法通过 cpu profile 进行排查。如果发生这类问题我们需要 c/cpp 的 profile 进行排查。diat 对 Linux perf 方案提供额外的支持（可以参考[node.js Flame Graphs on Linux](http://www.brendangregg.com/blog/2014-09-17/node-flame-graphs-on-linux.html)）。
+
+如果运行环境中已经安装了 perf 工具，则可以通过 `perf` 命令生成火焰图：
+
+```
+diat perf -p <PID>
+```
+
+最终会生成火焰图的svg文件（默认文件名称为: diat_perf.svg）：
+
+<img src="./imgs/perf_svg.png" style="width: 55%;"/>
+
+### 分步实现
+
+`diat perf` 是对多个命令的封装，下面将分步介绍单个命令的使用方式。
 
 首先通过`perfbasicprof`让 Node.js 进程生成.map 文件，.map 文件让 perf 能识别 js 的函数：
 

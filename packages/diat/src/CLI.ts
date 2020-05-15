@@ -1,21 +1,33 @@
 import chalk from 'chalk'
+import * as yargs from 'yargs'
 import * as inquirer from 'inquirer'
 import { Comm } from './Comm'
 import { logger } from './Logger'
+import { Perf } from './Perf'
 import { LinuxPerf } from './LinuxPerf'
 import { StackVis } from './StackVis'
 import { IUploadFileFunc } from './Types'
-import { uploadFile } from './upload'
 import { getFirstSessionURL, getPublicIP } from './utils'
 
+interface IYargsOption {
+  command: string
+  desc: string
+  optsFunc: (...args: any[]) => any
+  commandFunc: (...args: any[]) => any
+}
+
 type GetPublicIP = () => Promise<string | null>
+type GetProxyUrl = (url: string) => Promise<string | null>
 
 interface ICLIOptions {
   uploadFile?: IUploadFileFunc
-  getPublicIP: GetPublicIP
+  getPublicIP?: GetPublicIP
+  getProxyUrl?: GetProxyUrl
 }
 
 const kExitTips = 'press ctrl/meta+c to exit'
+const kDefaultSvgName = 'diat_perf.svg'
+const linuxPerf = new LinuxPerf()
 
 function throwInNextTick(err: any) {
   setTimeout(() => {
@@ -80,8 +92,34 @@ async function getActiveHandles(argv) {
   }
 }
 
+async function togglePerfBasicProf_(comm: Comm, enable: boolean) {
+  const modulePath = linuxPerf.getModulePath()
+  const ret = await comm.run('toggle_perf_basic_prof', {
+    enable,
+    modulePath,
+  })
+  if (ret.type === 'error') {
+    logger.log(`perfbasicprof failed, reason: ${ret.content}`)
+  } else {
+    const res = JSON.parse(ret.content)
+
+    if (res.operationReturn) {
+      if (enable) {
+        logger.log(`generating /tmp/perf-${res.pid}.map`)
+      } else {
+        logger.log('stop generating the .map file')
+      }
+    } else {
+      logger.log(
+        `operation has no effect, is the --perf-basic-prof already ${
+          enable ? 'on' : 'off'
+        }?`
+      )
+    }
+  }
+}
+
 async function togglePerfBasicProf(argv) {
-  const linuxPerf = new LinuxPerf()
   const modulePath = linuxPerf.getModulePath()
 
   if (!modulePath) {
@@ -98,6 +136,7 @@ async function togglePerfBasicProf(argv) {
     return
   }
   const enable = enableStr === 'true'
+
   const comm = createComm(argv)
   if (!comm) {
     return
@@ -105,29 +144,7 @@ async function togglePerfBasicProf(argv) {
 
   try {
     await comm.connect()
-    const ret = await comm.run('toggle_perf_basic_prof', {
-      enable,
-      modulePath,
-    })
-    if (ret.type === 'error') {
-      logger.log(`perfbasicprof failed, reason: ${ret.content}`)
-    } else {
-      const res = JSON.parse(ret.content)
-
-      if (res.operationReturn) {
-        if (enable) {
-          logger.log(`generating /tmp/perf-${res.pid}.map`)
-        } else {
-          logger.log('stop generating the .map file')
-        }
-      } else {
-        logger.log(
-          `operation has no effect, is the --perf-basic-prof already ${
-            enable ? 'on' : 'off'
-          }?`
-        )
-      }
-    }
+    await togglePerfBasicProf_(comm, enable)
     await comm.disconnect()
   } catch (err) {
     throwInNextTick(err)
@@ -162,12 +179,17 @@ async function startMetric(argv) {
   }
 }
 
+async function perf2svg_(file: string, svg: string): Promise<string> {
+  const vis = new StackVis()
+  const output = await vis.perfStackToSvg(file, svg)
+  logger.log(`svg file created: ${output}`)
+  return output
+}
+
 async function perf2svg(args) {
   const { file, svg } = args
-  const vis = new StackVis()
   try {
-    const output = await vis.perfStackToSvg(file, svg)
-    logger.log(`create: ${output}`)
+    await perf2svg_(file, svg)
   } catch (err) {
     throwInNextTick(err)
   }
@@ -190,16 +212,17 @@ const entryOptions = {
   p: pidOption,
   a: inspectorAddrOption,
 }
+const durationOptions = {
+  alias: 'duration',
+  demandOption: false,
+  describe: 'How long the profiling will last, unit: ms.',
+  default: 5000,
+  type: 'number',
+}
 
 function createProfileOptions(type) {
   const profileOptions = {
-    d: {
-      alias: 'duration',
-      demandOption: false,
-      describe: 'How long the profiling will last, unit: ms.',
-      default: 5000,
-      type: 'number',
-    },
+    d: durationOptions,
     i: {
       alias: 'interval',
       demandOption: false,
@@ -381,11 +404,13 @@ export class CLI {
   private logInspectorPort = async (
     isWorker: boolean,
     host: string,
-    port: number
+    port: number,
+    proxy: boolean
   ) => {
-    const { getPublicIP } = this.options
-    const ip = await getPublicIP()
-    const url = await getFirstSessionURL(host, port, ip)
+    const { getPublicIP, getProxyUrl } = this.options
+    const ip =
+      typeof getPublicIP === 'function' ? await getPublicIP() : '0.0.0.0'
+    const url = await getFirstSessionURL(host, port, ip, getProxyUrl)
     const hostPart = chalk.cyan(url)
     const addrPart = chalk.cyan(`${host}:${port}`)
     logger.log(
@@ -415,7 +440,7 @@ export class CLI {
       return
     }
 
-    const { port: proxyPort, repl } = argv
+    const { port: proxyPort, repl, proxy } = argv
     try {
       await comm.connect()
       if (repl) {
@@ -426,7 +451,7 @@ export class CLI {
       const { host, port, tcpProxy } = await comm.openInspect({
         port: proxyPort,
       })
-      await this.logInspectorPort(false, host, port)
+      await this.logInspectorPort(false, host, port, proxy)
       tcpProxy.once('close', (inspectorClosed) => {
         // get closed because the inspector server has exited
         if (inspectorClosed) {
@@ -448,7 +473,7 @@ export class CLI {
     if (!comm) {
       return
     }
-    const { repl = false } = argv
+    const { repl = false, proxy } = argv
 
     try {
       await comm.connect()
@@ -482,7 +507,7 @@ export class CLI {
         await this.attachRepl(comm, host, port)
         return
       }
-      await this.logInspectorPort(true, host, port)
+      await this.logInspectorPort(true, host, port, proxy)
       // wait signal to exit
       handleSigint(async () => {
         await comm.disconnect()
@@ -504,11 +529,46 @@ export class CLI {
     await comm.disconnect(true)
   }
 
-  main = async () => {
-    const { uploadFile } = this.options
-    // TODO
-    const hasuploadFunction = typeof uploadFile === 'function' && false
-    const uploadOpts = hasuploadFunction
+  private perf = async (argv) => {
+    const comm = createComm(argv)
+    if (!comm) {
+      return
+    }
+
+    const { pid, duration } = argv
+    try {
+      await comm.connect()
+      // 0. toggle --perf-basic-profs on
+      await togglePerfBasicProf_(comm, true)
+
+      // 0. perf record
+      const dataFile = await Perf.record({
+        pid,
+        duration,
+      })
+
+      // 0. toggle --perf-basic-profs off
+      await togglePerfBasicProf_(comm, false)
+
+      // 0. perf script
+      const outputFile = await Perf.script({
+        dataFile,
+      })
+
+      // 0. perf2svg
+      await perf2svg_(outputFile, kDefaultSvgName)
+
+      await comm.disconnect()
+    } catch (err) {
+      throwInNextTick(err)
+    }
+  }
+
+  public getYargsOptions = (): IYargsOption[] => {
+    const { uploadFile, getProxyUrl } = this.options
+    const hasUploadFunction = typeof uploadFile === 'function'
+    const hasGetProxyUrl = typeof getProxyUrl === 'function'
+    const uploadOpts = hasUploadFunction
       ? {
           u: {
             alias: 'upload',
@@ -520,13 +580,23 @@ export class CLI {
           ...gzipOpts,
         }
       : {}
+    const proxyOpts = hasGetProxyUrl
+      ? {
+          proxy: {
+            demandOption: false,
+            describe: 'Return the url replaced with a proxy one when possible.',
+            type: 'boolean',
+            default: true,
+          },
+        }
+      : {}
+    const options: IYargsOption[] = []
 
-    const yargs = require('yargs')
-
-    yargs.command(
-      'inspect',
-      'diat inspect -p=<pid>\nActivate inspector and forward it for a public IP.\n**Warning**: binding inspector to a public IP:port combination is insecure.',
-      (yargs) => {
+    options.push({
+      command: 'inspect',
+      desc:
+        'diat inspect -p=<pid>\nActivate inspector and forward it for a public IP.\n**Warning**: binding inspector to a public IP:port combination is insecure.',
+      optsFunc: (yargs) => {
         yargs.options({
           port: {
             demandOption: false,
@@ -534,40 +604,44 @@ export class CLI {
               'The port to be listened by inspector server, default: 0.',
             type: 'number',
           },
+          ...proxyOpts,
           ...replOptions,
           ...entryOptions,
         })
       },
-      this.inspect
-    )
+      commandFunc: this.inspect,
+    })
 
-    yargs.command(
-      'inspectworker',
-      'diat inspectworker -p=<pid>\nAs same as "inspect" but for a worker inside the process.',
-      (yargs) => {
+    options.push({
+      command: 'inspectworker',
+      desc:
+        'diat inspectworker -p=<pid>\nAs same as "inspect" but for a worker inside the process.',
+      optsFunc: (yargs) => {
         yargs.options({
+          ...proxyOpts,
           ...replOptions,
           ...entryOptions,
         })
       },
-      this.inspectWorker
-    )
+      commandFunc: this.inspectWorker,
+    })
 
-    yargs.command(
-      'inspectstop',
-      'diat inspectstop -a=<address>\nStop the inspector server of a Node.js process.',
-      (yargs) => {
+    options.push({
+      command: 'inspectstop',
+      desc:
+        'diat inspectstop -a=<address>\nStop the inspector server of a Node.js process.',
+      optsFunc: (yargs) => {
         yargs.option({
           ...entryOptions,
         })
       },
-      this.inspectstop
-    )
+      commandFunc: this.inspectstop,
+    })
 
-    yargs.command(
-      'metric',
-      'diat metric -p=<pid>\nLog basic resource usage of the process.',
-      (yargs) => {
+    options.push({
+      command: 'metric',
+      desc: 'diat metric -p=<pid>\nLog basic resource usage of the process.',
+      optsFunc: (yargs) => {
         yargs.option({
           ...entryOptions,
           s: {
@@ -579,26 +653,28 @@ export class CLI {
           },
         })
       },
-      startMetric
-    )
+      commandFunc: startMetric,
+    })
 
-    yargs.command(
-      'cpuprofile',
-      'diat cpuprofile -p=<pid> [<args>]\nStart cpu profile for a process.',
-      (yargs) => {
+    options.push({
+      command: 'cpuprofile',
+      desc:
+        'diat cpuprofile -p=<pid> [<args>]\nStart cpu profile for a process.',
+      optsFunc: (yargs) => {
         yargs.options({
           ...createProfileOptions('cpuprofile'),
           ...entryOptions,
           ...uploadOpts,
         })
       },
-      this.cpuProfile
-    )
+      commandFunc: this.cpuProfile,
+    })
 
-    yargs.command(
-      'heapsnapshot',
-      'diat heapsnapshot -p=<pid> [<args>]\nTake the heapsnapshot of a process.',
-      (yargs) => {
+    options.push({
+      command: 'heapsnapshot',
+      desc:
+        'diat heapsnapshot -p=<pid> [<args>]\nTake the heapsnapshot of a process.',
+      optsFunc: (yargs) => {
         yargs.options({
           f: {
             alias: 'file',
@@ -611,26 +687,28 @@ export class CLI {
           ...uploadOpts,
         })
       },
-      this.takeHeapsnapshot
-    )
+      commandFunc: this.takeHeapsnapshot,
+    })
 
-    yargs.command(
-      'heapprofile',
-      'diat heapprofile -p=<pid> [<args>]\nStart heap profile for a process.',
-      (yargs) => {
+    options.push({
+      command: 'heapprofile',
+      desc:
+        'diat heapprofile -p=<pid> [<args>]\nStart heap profile for a process.',
+      optsFunc: (yargs) => {
         yargs.options({
           ...createProfileOptions('heapprofile'),
           ...entryOptions,
           ...uploadOpts,
         })
       },
-      this.heapProfile
-    )
+      commandFunc: this.heapProfile,
+    })
 
-    yargs.command(
-      'heaptimeline',
-      'diat heaptimeline -p=<pid> [<args>]\nStart tracking heap objects for a process.',
-      (yargs) => {
+    options.push({
+      command: 'heaptimeline',
+      desc:
+        'diat heaptimeline -p=<pid> [<args>]\nStart tracking heap objects for a process.',
+      optsFunc: (yargs) => {
         yargs.options({
           d: {
             alias: 'duration',
@@ -656,14 +734,15 @@ export class CLI {
           ...uploadOpts,
         })
       },
-      this.heapTimeline
-    )
+      commandFunc: this.heapTimeline,
+    })
 
-    if (hasuploadFunction) {
-      yargs.command(
-        'upload',
-        'diat upload -f=<filename>\nUpload a .cpuprofile/.heapsnapshot file for later inspecting.',
-        (yargs) => {
+    if (hasUploadFunction) {
+      options.push({
+        command: 'upload',
+        desc:
+          'diat upload -f=<filename>\nUpload a .cpuprofile/.heapsnapshot file for later inspecting.',
+        optsFunc: (yargs) => {
           yargs.options({
             f: {
               alias: 'file',
@@ -674,15 +753,28 @@ export class CLI {
             ...gzipOpts,
           })
         },
-        this.upload
-      )
+        commandFunc: this.upload,
+      })
     }
 
-    yargs.command(
-      'perfbasicprof',
-      `diat perfbasicprof -p=<pid> -e=true|false\n` +
+    options.push({
+      command: 'perf',
+      desc: 'diat perf -p=<pid>',
+      optsFunc: (yargs) => {
+        yargs.options({
+          d: durationOptions,
+          ...entryOptions,
+        })
+      },
+      commandFunc: this.perf,
+    })
+
+    options.push({
+      command: 'perfbasicprof',
+      desc:
+        `diat perfbasicprof -p=<pid> -e=true|false\n` +
         `Toggle --perf-basic-prof to enable or disable generating /tmp/perf-$PID.map file for perf profiling.`,
-      (yargs) => {
+      optsFunc: (yargs) => {
         yargs.options({
           ...entryOptions,
           e: {
@@ -693,14 +785,15 @@ export class CLI {
           },
         })
       },
-      togglePerfBasicProf
-    )
+      commandFunc: togglePerfBasicProf,
+    })
 
-    yargs.command(
-      'perf2svg',
-      `diat perf2svg -f=<perf_script_file> [<args>]\n` +
+    options.push({
+      command: 'perf2svg',
+      desc:
+        `diat perf2svg -f=<perf_script_file> [<args>]\n` +
         'Parse the output of perf-script into a svg.',
-      (yargs) =>
+      optsFunc: (yargs) =>
         yargs.options({
           f: {
             alias: 'file',
@@ -713,22 +806,20 @@ export class CLI {
             demandOption: false,
             describe: 'File name which svg content will be written into.',
             type: 'string',
-            default: 'diat_perf.svg',
+            default: kDefaultSvgName,
           },
         }),
-      perf2svg
-    )
+      commandFunc: perf2svg,
+    })
 
-    // yargs.command(
-    //   'getactivehandles',
-    //   `diat getactivehandles -p=<pid>\nGet active handles of a Node.js process.`,
-    //   yargs => {
-    //     yargs.options({
-    //       ...entryOptions
-    //     });
-    //   },
-    //   getActiveHandles
-    // );
+    return options
+  }
+
+  runCLI = async (options: IYargsOption[]) => {
+    options.forEach((option) => {
+      const { commandFunc, desc, command, optsFunc } = option
+      yargs.command(command, desc, optsFunc, commandFunc)
+    })
 
     yargs
       .usage('usage: diat <command> [<args>]')
@@ -742,12 +833,16 @@ export class CLI {
       .strict()
       .parse()
   }
+
+  main = async () => {
+    const options = this.getYargsOptions()
+    return this.runCLI(options)
+  }
 }
 
 export const main = () => {
   const cli = new CLI({
     getPublicIP,
-    uploadFile,
   })
   return cli.main()
 }
