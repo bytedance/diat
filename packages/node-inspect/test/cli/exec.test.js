@@ -43,6 +43,16 @@ test('examples/alive.js', (t) => {
         '[Function: require]', 'can access "require"');
       t.match(cli.output, /> $/);
     })
+    .then(() => cli.command('global'))
+    .then(() => cli.waitFor(/clearTimeout/))
+    .then(() => cli.waitForPrompt())
+    .then(() => {
+      t.match(
+        cli.output,
+        'clearTimeout: [Function: clearTimeout]',
+        'show function properties correctly');
+      t.match(cli.output, /> $/);
+    })
     .then(() => cli.ctrlC())
     .then(() => cli.waitFor(/debug> $/))
     .then(() => cli.command('exec("[typeof heartbeat, typeof process.exit]")'))
