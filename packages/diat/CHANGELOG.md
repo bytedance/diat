@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 1.3.1
+refactor: set "includeCommandLineAPI" true to allow "require" in repl
 refactor: accept a number as a "scriptId" for "source()"
 refactor: rename "scriptSource" "source"
 chore: remove redundant console.log

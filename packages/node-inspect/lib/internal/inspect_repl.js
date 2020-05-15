@@ -705,12 +705,14 @@ function createRepl(inspector) {
         expression: code,
         objectGroup: 'node-inspect',
         generatePreview: true,
+        includeCommandLineAPI: true,
       }).then(RemoteObject.fromEvalResult);
     }
     return Runtime.evaluate({
       expression: code,
       objectGroup: 'node-inspect',
       generatePreview: true,
+      includeCommandLineAPI: true,
     }).then(RemoteObject.fromEvalResult);
   }
 
