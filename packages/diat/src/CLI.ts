@@ -100,8 +100,11 @@ async function getActiveHandles(argv) {
   }
 }
 
-async function togglePerfBasicProf_(comm: Comm, enable: boolean) {
+export async function togglePerfBasicProf_(comm: Comm, enable: boolean) {
   const modulePath = linuxPerf.getModulePath()
+  if (!modulePath) {
+    throw new Error('diat-linux-perf installation failed')
+  }
   const ret = await comm.run('toggle_perf_basic_prof', {
     enable,
     modulePath,
@@ -542,6 +545,9 @@ export class CLI {
 
     const { pid, duration } = argv
     try {
+      if (!(await Perf.hasPerf())) {
+        throw new Error('failed to find "perf"')
+      }
       await comm.connect()
       // 0. toggle --perf-basic-profs on
       await togglePerfBasicProf_(comm, true)
@@ -764,7 +770,8 @@ export class CLI {
 
     options.push({
       command: 'perf',
-      desc: 'diat perf -p=<pid>',
+      desc:
+        'diat perf -p=<pid>\nRecord cpu profile with perf. Perf is expected to have been installed.',
       optsFunc: (yargs) => {
         yargs.options({
           d: durationOptions,
