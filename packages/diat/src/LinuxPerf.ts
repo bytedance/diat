@@ -14,6 +14,9 @@ export class LinuxPerf {
     }
 
     try {
+      // It's possible that "diat-linux-perf" module exists while gyp installation failed.
+      // We directly require the module to ensure it works.
+      require('diat-linux-perf')
       return require.resolve('diat-linux-perf')
     } catch (err) {
       //
