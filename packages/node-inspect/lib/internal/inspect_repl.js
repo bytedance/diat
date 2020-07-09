@@ -1310,6 +1310,8 @@ function createRepl(inspector) {
         const oldContext = repl.context;
         const oldCompleter = repl.completer;
 
+        const historyPath = process.env.NODE_REPL_DEBUG_HISTORY || '.node_repl_debug_history'
+
         exitDebugRepl = () => {
           // Restore all listeners
           process.nextTick(() => {
@@ -1323,6 +1325,7 @@ function createRepl(inspector) {
           repl.completer = oldCompleter;
 
           // Swap history
+          saveHistory(repl, historyPath)
           history.debug = repl.history;
           repl.history = history.control;
 
@@ -1350,6 +1353,7 @@ function createRepl(inspector) {
         // Swap history
         history.control = repl.history;
         repl.history = history.debug;
+        loadHistory(repl, historyPath)
 
         repl.setPrompt('> ');
 
@@ -1435,6 +1439,20 @@ function createRepl(inspector) {
     };
 
     repl = Repl.start(replOptions); // eslint-disable-line prefer-const
+
+    // set history
+    const historyPath = process.env.NODE_REPL_HISTORY || '.node_repl_history'
+    if (typeof repl.setupHistory === "function") {
+      repl.setupHistory(historyPath, (err, r) => {
+        if (err) console.log(`\nsetupHistory error (NODE_REPL_HISTORY=${historyPath})`, err);
+      })
+    } else {
+      loadHistory(repl, historyPath)
+      repl.on('exit', () => {
+        saveHistory(repl, historyPath)
+      })
+    }
+
     initializeContext(repl.context);
     repl.on('reset', initializeContext);
 
@@ -1456,4 +1474,34 @@ function createRepl(inspector) {
     return repl;
   };
 }
+
+function loadHistory(repl, historyPath) {
+  try {
+    FS.statSync(historyPath)
+    FS.readFileSync(historyPath, {
+      encoding: 'utf-8'
+    })
+    .split('\n')
+    .reverse()
+    .filter(line => line.trim())
+    .forEach(line => {
+      repl.history.push(line)
+    })
+  } catch (error) {
+  
+  }
+}
+
+function saveHistory(repl, historyPath) {
+  try {
+    const lines = [...(repl.history || [])]
+    .reverse()
+    .filter(line => line.trim())
+    .join('\n')
+    FS.writeFileSync(historyPath, lines)
+  } catch (error) {
+    
+  }
+}
+
 module.exports = createRepl;

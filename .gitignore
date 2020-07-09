@@ -1,5 +1,6 @@
 node_modules
 lerna-debug.log
 .DS_Store
+.node_repl_debug_history
 
 test.js
