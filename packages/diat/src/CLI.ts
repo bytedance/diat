@@ -67,8 +67,16 @@ function createComm(argv): Comm | null {
 }
 
 function handleSigint(func) {
+  let hasReceived = false
   process.on('SIGINT', async () => {
+    if (hasReceived) {
+      process.exit(0)
+      return
+    }
+    hasReceived = true
+    logger.log('\nwaiting for clean up resources (To forced exit, press ^C again)')
     await func()
+    process.exit(0)
   })
 }
 
@@ -172,7 +180,6 @@ async function startMetric(argv) {
 
     handleSigint(async () => {
       await comm.disconnect()
-      process.exit(0)
     })
   } catch (err) {
     throwInNextTick(err)
@@ -461,7 +468,6 @@ export class CLI {
       // wait signal to exit
       handleSigint(async () => {
         await comm.disconnect()
-        process.exit(0)
       })
     } catch (err) {
       throwInNextTick(err)
@@ -511,7 +517,6 @@ export class CLI {
       // wait signal to exit
       handleSigint(async () => {
         await comm.disconnect()
-        process.exit(0)
       })
     } catch (err) {
       throwInNextTick(err)
