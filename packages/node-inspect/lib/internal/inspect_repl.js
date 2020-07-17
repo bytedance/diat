@@ -25,6 +25,7 @@ const Path = require('path');
 const Repl = require('repl');
 const util = require('util');
 const vm = require('vm');
+const os = require('os');
 const fileURLToPath = require('url').fileURLToPath;
 
 const debuglog = util.debuglog('inspect');
@@ -1310,7 +1311,7 @@ function createRepl(inspector) {
         const oldContext = repl.context;
         const oldCompleter = repl.completer;
 
-        const historyPath = process.env.NODE_REPL_DEBUG_HISTORY || '.node_repl_debug_history'
+        const historyPath = process.env.NODE_REPL_DEBUG_HISTORY || Path.resolve(os.homedir(), './.diat_repl_debug_history')
 
         exitDebugRepl = () => {
           // Restore all listeners
@@ -1325,7 +1326,7 @@ function createRepl(inspector) {
           repl.completer = oldCompleter;
 
           // Swap history
-          saveHistory(repl, historyPath)
+          saveHistory(repl.history, historyPath)
           history.debug = repl.history;
           repl.history = history.control;
 
@@ -1441,17 +1442,11 @@ function createRepl(inspector) {
     repl = Repl.start(replOptions); // eslint-disable-line prefer-const
 
     // set history
-    const historyPath = process.env.NODE_REPL_HISTORY || '.node_repl_history'
-    if (typeof repl.setupHistory === "function") {
-      repl.setupHistory(historyPath, (err, r) => {
-        if (err) console.log(`\nsetupHistory error (NODE_REPL_HISTORY=${historyPath})`, err);
-      })
-    } else {
-      loadHistory(repl, historyPath)
-      repl.on('exit', () => {
-        saveHistory(repl, historyPath)
-      })
-    }
+    const historyPath = process.env.NODE_REPL_HISTORY || Path.resolve(os.homedir(), './.diat_repl_history')
+    loadHistory(repl, historyPath)
+    repl.on('exit', () => {
+      saveHistory(repl.history, historyPath)
+    })
 
     initializeContext(repl.context);
     repl.on('reset', initializeContext);
@@ -1488,19 +1483,19 @@ function loadHistory(repl, historyPath) {
       repl.history.push(line)
     })
   } catch (error) {
-  
+    //
   }
 }
 
-function saveHistory(repl, historyPath) {
+function saveHistory(history, historyPath) {
   try {
-    const lines = [...(repl.history || [])]
+    const lines = [...(history || [])]
     .reverse()
     .filter(line => line.trim())
     .join('\n')
     FS.writeFileSync(historyPath, lines)
   } catch (error) {
-    
+
   }
 }
 

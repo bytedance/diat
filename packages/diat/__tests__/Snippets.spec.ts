@@ -7,7 +7,7 @@ import { kMessageSeperator } from '../src/Metric'
 const kSocketPath = path.resolve(__dirname, './test.sock')
 
 function removePipeSocket() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     fs.unlink(kSocketPath, () => {
       resolve()
     })
@@ -36,7 +36,7 @@ describe('Snippets', () => {
 
       const server = net.createServer()
 
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         server.listen(kSocketPath, () => {
           resolve()
         })
@@ -50,15 +50,15 @@ describe('Snippets', () => {
 
       eval(code)
 
-      const socket: net.Socket = await new Promise(resolve => {
-        server.once('connection', socket => {
+      const socket: net.Socket = await new Promise((resolve) => {
+        server.once('connection', (socket) => {
           resolve(socket)
         })
       })
 
-      const msg = await new Promise(resolve => {
+      const msg = await new Promise((resolve) => {
         let msg = ''
-        socket.once('data', data => {
+        socket.once('data', (data) => {
           msg += data.toString('utf8')
 
           const index = msg.indexOf(kMessageSeperator)
