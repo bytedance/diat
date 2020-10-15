@@ -56,5 +56,19 @@ describe('utils', () => {
       expect(ret).toContain('devtools://')
       expect(ret).toContain('MY_URL')
     })
+
+    it('should support to replace the whole url', async () => {
+      const ret = await getFirstSessionURL(
+        '127.0.0.1',
+        9229,
+        '127.0.0.1',
+        (url) => {
+          return Promise.resolve({
+            completeUrl: 'devtools://abc',
+          })
+        }
+      )
+      expect(ret).toBe('devtools://abc')
+    })
   })
 })

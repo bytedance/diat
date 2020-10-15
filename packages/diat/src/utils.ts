@@ -3,6 +3,10 @@ import * as semver from 'semver'
 import fetch from 'node-fetch'
 import * as os from 'os'
 
+export type GetProxyUrlType = (
+  url: string
+) => Promise<string | null | { completeUrl: string }>
+
 const kPublicIpPlaceholder = '0.0.0.0'
 
 export function getAbsolutePath(file: string): string {
@@ -37,7 +41,7 @@ export async function getFirstSessionURL(
   host: string,
   port: number,
   ip: string | null,
-  getProxyUrl?: (url: string) => Promise<string | null>
+  getProxyUrl?: GetProxyUrlType
 ): Promise<string> {
   ip = ip || kPublicIpPlaceholder
   const res = await fetch(`http://${host}:${port}/json`)
@@ -57,9 +61,21 @@ export async function getFirstSessionURL(
   let addr = `${ip}:${port}/${id}`
 
   if (typeof getProxyUrl === 'function') {
+    /**
+     * If the typeof value that "getProxyUrl" returns is a:
+     * - url, it's regarded as the "ws" part
+     * - null, use the default url
+     * - object with "completeUrl" key, it's regarded as the url
+     */
     const proxyUrl = await getProxyUrl(addr)
-    if (proxyUrl) {
+    if (typeof proxyUrl === 'string') {
       addr = proxyUrl
+    } else if (
+      proxyUrl &&
+      typeof proxyUrl === 'object' &&
+      proxyUrl.completeUrl
+    ) {
+      return proxyUrl.completeUrl
     }
   }
 

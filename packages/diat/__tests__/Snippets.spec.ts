@@ -71,6 +71,7 @@ describe('Snippets', () => {
       expect(msg).toEqual({
         cpuUsage: { user: expect.anything(), system: expect.anything() },
         memoryUsage: {
+          arrayBuffers: expect.anything(),
           rss: expect.anything(),
           heapTotal: expect.anything(),
           heapUsed: expect.anything(),

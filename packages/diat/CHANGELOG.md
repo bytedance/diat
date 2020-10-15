@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 1.5.0
+feat: allow "getProxyUrl" to replace the whole debug url
+
 ## 1.4.0
 feat: add "perf" command to wrap relative commands
 refactor: set "includeCommandLineAPI" true to allow "require" in repl
