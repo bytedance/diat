@@ -7,7 +7,7 @@ import { Perf } from './Perf'
 import { LinuxPerf } from './LinuxPerf'
 import { StackVis } from './StackVis'
 import { IUploadFileFunc } from './Types'
-import { getFirstSessionURL, getPublicIP } from './utils'
+import { getFirstSessionURL, getPublicIP, GetProxyUrlType } from './utils'
 
 interface IYargsOption {
   command: string
@@ -17,12 +17,11 @@ interface IYargsOption {
 }
 
 type GetPublicIP = () => Promise<string | null>
-type GetProxyUrl = (url: string) => Promise<string | null>
 
 interface ICLIOptions {
   uploadFile?: IUploadFileFunc
   getPublicIP?: GetPublicIP
-  getProxyUrl?: GetProxyUrl
+  getProxyUrl?: GetProxyUrlType
 }
 
 const kExitTips = 'press ctrl/meta+c to exit'
@@ -74,7 +73,9 @@ function handleSigint(func) {
       return
     }
     hasReceived = true
-    logger.log('\nwaiting for clean up resources (To forced exit, press ^C again)')
+    logger.log(
+      '\nwaiting for clean up resources (To forced exit, press ^C again)'
+    )
     await func()
     process.exit(0)
   })
