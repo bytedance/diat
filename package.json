@@ -5,6 +5,7 @@
     "bootstrap": "lerna bootstrap && lerna link",
     "build": "cd packages/live-inspector && npm run build && cd ../diat && npm run build",
     "test": "cd packages/diat && npm test",
+    "test:ci": "cd packages/diat && CI_TEST=1 npm test",
     "postinstall": "npm run bootstrap && npm run build",
     "publish": "lerna publish"
   },

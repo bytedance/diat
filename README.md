@@ -86,9 +86,9 @@ npm i diat -g && diat --help
 
 ### Node.js版本支持
 
-||Node.js 8|Node.js 10|Node.js 12|
+||Node.js 8|Node.js 10|Node.js 12|Node.js 14|
 |---|---|---|---|
-|版本支持|⚠️ 基本支持，但会有些限制|✅|✅|
+|版本支持|⚠️ 基本支持，但会有些限制|✅|✅|✅|
 
 ## 使用场景介绍
 

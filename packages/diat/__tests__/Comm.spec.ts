@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import fetch from 'node-fetch'
 import { promisify } from 'util'
 import { Comm, getEvaluateResult } from '../src/Comm'
-import { createTestProcess, kTimeout, hasWorker, wait } from './utils'
+import { createTestProcess, kTimeout, hasWorker, wait, isCiTest } from './utils'
 
 const readFile = promisify(fs.readFile)
 
@@ -210,7 +210,7 @@ describe('Comm', () => {
     )
   })
 
-  if (hasWorker()) {
+  if (hasWorker() && !isCiTest()) {
     describe('InspectWorker', () => {
       it(
         'should open an inspect port for workers',
