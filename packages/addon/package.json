@@ -1,0 +1,24 @@
+{
+  "name": "diat-addon",
+  "version": "1.0.0",
+  "description": "Some addon utilities for diagnostics.",
+  "main": "index.js",
+  "files": [
+    "prebuild/**/*.node",
+    "index.js"
+  ],
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "test": "npm run build && node node_modules/.bin/mocha __tests__"
+  },
+  "author": "Ouyang Yadong <oyydoibh@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "bindings": "^1.5.0"
+  },
+  "devDependencies": {
+    "expect": "^24.9.0",
+    "mocha": "^6.2.2",
+    "node-addon-api": "^1.7.1"
+  }
+}

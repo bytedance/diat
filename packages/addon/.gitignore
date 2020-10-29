@@ -1,0 +1,6 @@
+build/**
+dep/**
+lib/*.js
+lib/**/*.d.ts
+
+prebuild
