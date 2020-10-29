@@ -16,9 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        # need to investigate why `npm test` always halts on 12.x
-        # node-version: [10.x, 12.x]
-        node-version: [10.x]
+        node-version: [10, 12, 14]
 
     steps:
     - uses: actions/checkout@v2

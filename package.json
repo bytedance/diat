@@ -5,7 +5,8 @@
     "bootstrap": "lerna bootstrap && lerna link",
     "build": "cd packages/live-inspector && npm run build && cd ../diat && npm run build",
     "test": "cd packages/diat && npm test",
-    "postinstall": "npm run bootstrap && npm run build"
+    "postinstall": "npm run bootstrap && npm run build",
+    "publish": "lerna publish"
   },
   "devDependencies": {
     "husky": "^4.2.5",

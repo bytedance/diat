@@ -56,7 +56,7 @@ describe('Snippets', () => {
         })
       })
 
-      const msg = await new Promise((resolve) => {
+      const msg = await new Promise<any>((resolve) => {
         let msg = ''
         socket.once('data', (data) => {
           msg += data.toString('utf8')
@@ -68,20 +68,20 @@ describe('Snippets', () => {
         })
       })
 
-      expect(msg).toEqual({
-        cpuUsage: { user: expect.anything(), system: expect.anything() },
-        memoryUsage: {
-          arrayBuffers: expect.anything(),
-          rss: expect.anything(),
-          heapTotal: expect.anything(),
-          heapUsed: expect.anything(),
-          external: expect.anything(),
-        },
-        uv: {
-          latency: expect.anything(),
-          handle: expect.anything(),
-          request: expect.anything(),
-        },
+      expect(msg.cpuUsage).toMatchObject({
+        user: expect.anything(),
+        system: expect.anything(),
+      })
+      expect(msg.memoryUsage).toMatchObject({
+        rss: expect.anything(),
+        heapTotal: expect.anything(),
+        heapUsed: expect.anything(),
+        external: expect.anything(),
+      })
+      expect(msg.uv).toMatchObject({
+        latency: expect.anything(),
+        handle: expect.anything(),
+        request: expect.anything(),
       })
 
       socket.destroy()
