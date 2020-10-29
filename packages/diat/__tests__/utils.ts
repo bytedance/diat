@@ -46,3 +46,7 @@ export function wait(t: number) {
     }, t)
   })
 }
+
+export function isCiTest() {
+  return process.env.CI_TEST === '1'
+}
