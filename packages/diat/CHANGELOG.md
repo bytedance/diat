@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 1.5.1
+fix: fix opening inspector for workers
+
 ## 1.5.0
 feat: allow "getProxyUrl" to replace the whole debug url
 

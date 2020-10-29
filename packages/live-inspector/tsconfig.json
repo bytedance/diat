@@ -16,7 +16,7 @@
     "noImplicitAny": false,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "ws"],
     "noUnusedLocals": false
   },
   "exclude": [

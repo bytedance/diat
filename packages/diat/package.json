@@ -1,6 +1,6 @@
 {
   "name": "diat",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "A CLI tool to help with diagnosing Node.js processes basing on inspector.",
   "main": "lib/index.js",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "dev": "npm run build && ./bin/diat.js --help",
     "build": "tsc",
     "prepublish": "npm run build && cp ../../README_EN.md ./README.md",
-    "test": "jest -c jest.config.json --coverage --coveragePathIgnorePatterns=__tests__ --passWithNoTests -w=1 --forceExit",
+    "test": "jest -c jest.config.json --coverage --coveragePathIgnorePatterns=__tests__ --passWithNoTests --forceExit -i",
     "test:ci": "node scripts/ci",
     "prettier": "prettier src/**/*.ts --write"
   },

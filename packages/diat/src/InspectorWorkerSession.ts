@@ -36,7 +36,7 @@ export class InspectorWorkerSession extends Event {
     )
   }
 
-  private handleWorkerDetached = info => {
+  private handleWorkerDetached = (info) => {
     const { sessionId } = this.config
     const { sessionId: msgSesssionId } = info
 
@@ -55,7 +55,7 @@ export class InspectorWorkerSession extends Event {
     let id = 0
 
     const waitInspectorOpenMsg = () =>
-      new Promise(resolve => {
+      new Promise((resolve) => {
         const cleanUp = (message: any) => {
           event.removeListener(
             'NodeWorker.receivedMessageFromWorker',
@@ -63,7 +63,7 @@ export class InspectorWorkerSession extends Event {
           )
           resolve(message)
         }
-        const handleMsg = info => {
+        const handleMsg = (info) => {
           if (info.sessionId === sessionId) {
             const message = JSON.parse(info.message)
             // TODO better solutions?
@@ -112,7 +112,13 @@ export class InspectorWorkerSession extends Event {
       }
     }
 
-    throw new Error('failed to open inspector inside the worker')
+    throw new Error(
+      `failed to open inspector inside the worker: ${JSON.stringify(
+        message,
+        null,
+        2
+      )}`
+    )
   }
 
   // TODO(oyyd): inspector.close() is missed in threads
@@ -157,7 +163,7 @@ export class InspectorWorkerSession extends Event {
     }
 
     if (server) {
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         server.close(() => {
           resolve()
         })
