@@ -1,14 +1,9 @@
 /* eslint-disable */
 const expect = require('expect');
+const mod = require('../')
 
 describe('addon', () => {
-  const addon = require('../');
-
   describe('addIncreaseHeapLimitHandler', () => {
-    const {
-      addIncreaseHeapLimitHandler,
-      removeIncreaseHeapLimitHandler
-    } = addon;
     it('should work', () => {
       const check = (ret, expected) => {
         const is8 = process.versions.node.split('.')[0] === '8';
@@ -17,10 +12,10 @@ describe('addon', () => {
         }
       };
 
-      check(addIncreaseHeapLimitHandler(), true);
-      check(addIncreaseHeapLimitHandler(), false);
-      check(removeIncreaseHeapLimitHandler(), true);
-      check(removeIncreaseHeapLimitHandler(), false);
+      check(mod.addIncreaseHeapLimitHandler(), true);
+      check(mod.addIncreaseHeapLimitHandler(), false);
+      check(mod.removeIncreaseHeapLimitHandler(), true);
+      check(mod.removeIncreaseHeapLimitHandler(), false);
     });
   });
 });
