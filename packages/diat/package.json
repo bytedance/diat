@@ -35,7 +35,7 @@
     "diat-node-inspect": "^1.4.0",
     "diat-stackvis-simplified": "^1.4.0",
     "inquirer": "^7.0.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^3.1.1",
     "semver": "^6.3.0",
     "serve-static": "^1.14.1",
     "tslib": "^1.10.0",
