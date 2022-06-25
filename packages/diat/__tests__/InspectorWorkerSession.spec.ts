@@ -23,7 +23,7 @@ describe('InspectorWorkerSession', () => {
       const worker = new thread.Worker(
         path.resolve(__dirname, './test_process/thread_worker.js')
       )
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         worker.once('online', () => {
           resolve()
         })
@@ -36,7 +36,7 @@ describe('InspectorWorkerSession', () => {
   afterAll(async () => {
     // NOTE Workers won't exit so we add '--forceExit' to jest.
     for (const worker of workers) {
-      worker.terminate()
+      await worker.terminate()
     }
   })
 
@@ -94,7 +94,7 @@ describe('InspectorWorkerSession', () => {
   it('should emit close when detached', async () => {
     await workerSession.inspect()
 
-    const p = new Promise((resolve) => {
+    const p = new Promise<void>((resolve) => {
       workerSession.once('close', () => {
         resolve()
       })

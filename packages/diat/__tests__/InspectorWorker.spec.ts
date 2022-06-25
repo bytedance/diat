@@ -29,7 +29,7 @@ describe('InspectorWorker', () => {
   afterAll(async () => {
     // NOTE Workers won't exit so we add '--forceExit' to jest.
     for (const worker of workers) {
-      worker.terminate()
+      await worker.terminate()
     }
   })
 
