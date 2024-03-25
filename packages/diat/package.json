@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "npm run build && ./bin/diat.js --help",
     "build": "tsc",
-    "prepublish": "npm run build && cp ../../README_EN.md ./README.md",
+    "prepublish": "npm run build",
     "test": "jest -c jest.config.json --coverage --coveragePathIgnorePatterns=__tests__ --passWithNoTests --detectOpenHandles --forceExit -i",
     "test:ci": "node scripts/ci",
     "prettier": "prettier src/**/*.ts --write"
@@ -50,5 +50,8 @@
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.10.0",
     "typescript": "^3.8.3"
+  },
+  "overrides":{
+    "json-schema": "^0.4.0"
   }
 }
