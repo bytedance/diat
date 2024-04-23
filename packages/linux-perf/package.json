@@ -23,7 +23,7 @@
   "homepage": "https://github.com/mmarchini/node-linux-perf#readme",
   "dependencies": {
     "node-addon-api": "^1.7.1",
-    "node-gyp": "^4.0.0",
+    "node-gyp": "^10.1.0",
     "semver": "^6.3.0"
   },
   "devDependencies": {
