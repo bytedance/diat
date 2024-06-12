@@ -19,8 +19,8 @@
     "@types/jest": "^23.3.7",
     "@types/node": "^13.9.0",
     "@types/ws": "^7.2.9",
-    "jest": "^26",
-    "ts-jest": "^26",
+    "jest": "^29",
+    "ts-jest": "^29",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.10.0",
     "typescript": "^3.6.4"
