@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 2.0.0
+deprecated: linux-perf is removed. Please check https://nodejs.org/en/learn/diagnostics/poor-performance/ if you need it.
+
 ## 1.5.1
 fix: fix opening inspector for workers
 

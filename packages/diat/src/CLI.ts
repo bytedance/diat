@@ -4,7 +4,6 @@ import * as inquirer from 'inquirer'
 import { Comm } from './Comm'
 import { logger } from './Logger'
 import { Perf } from './Perf'
-import { LinuxPerf } from './LinuxPerf'
 import { StackVis } from './StackVis'
 import { IUploadFileFunc } from './Types'
 import { getFirstSessionURL, getPublicIP, GetProxyUrlType } from './utils'
@@ -26,7 +25,6 @@ interface ICLIOptions {
 
 const kExitTips = 'press ctrl/meta+c to exit'
 const kDefaultSvgName = 'diat_perf.svg'
-const linuxPerf = new LinuxPerf()
 
 function throwInNextTick(err: any) {
   setTimeout(() => {
@@ -102,65 +100,11 @@ async function getActiveHandles(argv) {
 }
 
 export async function togglePerfBasicProf_(comm: Comm, enable: boolean) {
-  const modulePath = linuxPerf.getModulePath()
-  if (!modulePath) {
-    throw new Error('diat-linux-perf installation failed')
-  }
-  const ret = await comm.run('toggle_perf_basic_prof', {
-    enable,
-    modulePath,
-  })
-  if (ret.type === 'error') {
-    logger.log(`perfbasicprof failed, reason: ${ret.content}`)
-  } else {
-    const res = JSON.parse(ret.content)
-
-    if (res.operationReturn) {
-      if (enable) {
-        logger.log(`generating /tmp/perf-${res.pid}.map`)
-      } else {
-        logger.log('stop generating the .map file')
-      }
-    } else {
-      logger.log(
-        `operation has no effect, is the --perf-basic-prof already ${
-          enable ? 'on' : 'off'
-        }?`
-      )
-    }
-  }
+  throw new Error('linux perf is diabled now')
 }
 
 async function togglePerfBasicProf(argv) {
-  const modulePath = linuxPerf.getModulePath()
-
-  if (!modulePath) {
-    logger.log(
-      'The installation of "linux-perf" failed, make sure your Node.js >= 10 to use perbasicprof.'
-    )
-    return
-  }
-
-  const { enable: enableStr } = argv
-
-  if (enableStr !== 'true' && enableStr !== 'false') {
-    logger.log('the value of -e should be exact "true" or "false"')
-    return
-  }
-  const enable = enableStr === 'true'
-
-  const comm = createComm(argv)
-  if (!comm) {
-    return
-  }
-
-  try {
-    await comm.connect()
-    await togglePerfBasicProf_(comm, enable)
-    await comm.disconnect()
-  } catch (err) {
-    throwInNextTick(err)
-  }
+  throw new Error('linux perf is diabled now')
 }
 
 async function startMetric(argv) {
@@ -606,8 +550,7 @@ export class CLI {
 
     options.push({
       command: 'inspect',
-      desc:
-        'diat inspect -p=<pid>\nActivate inspector and forward it for a public IP.\n**Warning**: binding inspector to a public IP:port combination is insecure.',
+      desc: 'diat inspect -p=<pid>\nActivate inspector and forward it for a public IP.\n**Warning**: binding inspector to a public IP:port combination is insecure.',
       optsFunc: (yargs) => {
         yargs.options({
           port: {
@@ -626,8 +569,7 @@ export class CLI {
 
     options.push({
       command: 'inspectworker',
-      desc:
-        'diat inspectworker -p=<pid>\nAs same as "inspect" but for a worker inside the process.',
+      desc: 'diat inspectworker -p=<pid>\nAs same as "inspect" but for a worker inside the process.',
       optsFunc: (yargs) => {
         yargs.options({
           ...proxyOpts,
@@ -640,8 +582,7 @@ export class CLI {
 
     options.push({
       command: 'inspectstop',
-      desc:
-        'diat inspectstop -a=<address>\nStop the inspector server of a Node.js process.',
+      desc: 'diat inspectstop -a=<address>\nStop the inspector server of a Node.js process.',
       optsFunc: (yargs) => {
         yargs.option({
           ...entryOptions,
@@ -670,8 +611,7 @@ export class CLI {
 
     options.push({
       command: 'cpuprofile',
-      desc:
-        'diat cpuprofile -p=<pid> [<args>]\nStart cpu profile for a process.',
+      desc: 'diat cpuprofile -p=<pid> [<args>]\nStart cpu profile for a process.',
       optsFunc: (yargs) => {
         yargs.options({
           ...createProfileOptions('cpuprofile'),
@@ -684,8 +624,7 @@ export class CLI {
 
     options.push({
       command: 'heapsnapshot',
-      desc:
-        'diat heapsnapshot -p=<pid> [<args>]\nTake the heapsnapshot of a process.',
+      desc: 'diat heapsnapshot -p=<pid> [<args>]\nTake the heapsnapshot of a process.',
       optsFunc: (yargs) => {
         yargs.options({
           f: {
@@ -704,8 +643,7 @@ export class CLI {
 
     options.push({
       command: 'heapprofile',
-      desc:
-        'diat heapprofile -p=<pid> [<args>]\nStart heap profile for a process.',
+      desc: 'diat heapprofile -p=<pid> [<args>]\nStart heap profile for a process.',
       optsFunc: (yargs) => {
         yargs.options({
           ...createProfileOptions('heapprofile'),
@@ -718,8 +656,7 @@ export class CLI {
 
     options.push({
       command: 'heaptimeline',
-      desc:
-        'diat heaptimeline -p=<pid> [<args>]\nStart tracking heap objects for a process.',
+      desc: 'diat heaptimeline -p=<pid> [<args>]\nStart tracking heap objects for a process.',
       optsFunc: (yargs) => {
         yargs.options({
           d: {
@@ -752,8 +689,7 @@ export class CLI {
     if (hasUploadFunction) {
       options.push({
         command: 'upload',
-        desc:
-          'diat upload -f=<filename>\nUpload a .cpuprofile/.heapsnapshot file for later inspecting.',
+        desc: 'diat upload -f=<filename>\nUpload a .cpuprofile/.heapsnapshot file for later inspecting.',
         optsFunc: (yargs) => {
           yargs.options({
             f: {
@@ -771,8 +707,7 @@ export class CLI {
 
     options.push({
       command: 'perf',
-      desc:
-        'diat perf -p=<pid>\nRecord cpu profile with perf. Perf is expected to have been installed.',
+      desc: 'diat perf -p=<pid>\nRecord cpu profile with perf. Perf is expected to have been installed.',
       optsFunc: (yargs) => {
         yargs.options({
           d: durationOptions,

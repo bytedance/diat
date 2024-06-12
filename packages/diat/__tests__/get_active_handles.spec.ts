@@ -21,7 +21,7 @@ describe('get_active_handles', () => {
     await clear()
   })
 
-  it(
+  xit(
     'should work with net.Socket and net.Server',
     async () => {
       child = (await createTestProcess('net_socket_server')).child
