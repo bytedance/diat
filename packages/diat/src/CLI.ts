@@ -100,11 +100,15 @@ async function getActiveHandles(argv) {
 }
 
 export async function togglePerfBasicProf_(comm: Comm, enable: boolean) {
-  throw new Error('linux perf is diabled now')
+  throw new Error(
+    'linux perf is disabled now, please check https://nodejs.org/en/learn/diagnostics/poor-performance/'
+  )
 }
 
 async function togglePerfBasicProf(argv) {
-  throw new Error('linux perf is diabled now')
+  throw new Error(
+    'linux perf is disabled now, please check https://nodejs.org/en/learn/diagnostics/poor-performance/'
+  )
 }
 
 async function startMetric(argv) {

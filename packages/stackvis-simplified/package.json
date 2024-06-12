@@ -1,6 +1,6 @@
 {
 	"name": "diat-stackvis-simplified",
-	"version": "1.5.2",
+	"version": "1.5.3",
 	"description": "stack visualization tools",
 	"main": "./lib/stackvis.js",
 	"bin": {
