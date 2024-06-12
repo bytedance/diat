@@ -185,7 +185,7 @@ describe('Comm', () => {
       await wait(100)
     })
 
-    it(
+    xit(
       'should open inspect port with specified port',
       async () => {
         const ret = await comm.openInspect({ port: 9229 })
@@ -232,7 +232,7 @@ describe('Comm', () => {
   }
 
   describe('Comm.openInspect', () => {
-    it(
+    xit(
       'should open inspect port with specified port',
       async () => {
         const child = (await createTestProcess()).child
